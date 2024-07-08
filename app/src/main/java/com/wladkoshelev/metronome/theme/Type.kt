@@ -1,4 +1,4 @@
-package com.wladkoshelev.metronome.ui.theme
+package com.wladkoshelev.metronome.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

@@ -1,4 +1,4 @@
-package com.wladkoshelev.metronome.ui.theme
+package com.wladkoshelev.metronome.theme
 
 import androidx.compose.ui.graphics.Color
 
