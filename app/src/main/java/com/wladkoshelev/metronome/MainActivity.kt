@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
             MetronomeTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Greeting("Android 111")
+                    Greeting("Android 111 2222")
                 }
             }
         }
