@@ -94,6 +94,9 @@ dependencies {
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
 
+    // Compose Collect With Lifecicrle
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.3")
+
     // LeakCanary
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.14'
 
