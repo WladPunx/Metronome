@@ -27,9 +27,10 @@ import org.koin.androidx.compose.koinViewModel
 @Destination
 @Composable
 fun MetronomeFragment(
-    navController: NavController
+    navController: NavController,
+    songsId: String?
 ) {
-    val vm = koinViewModel<MetronomeVM.VM> { MetronomeVM().params() }
+    val vm = koinViewModel<MetronomeVM.VM> { MetronomeVM().params(songsId) }
     val state by vm.state.collectAsStateWithLifecycle()
     val intent = remember { vm::sendIntent }
     UI(
@@ -38,13 +39,13 @@ fun MetronomeFragment(
     )
 }
 
-fun getMetronomeFragment() = NavigationInstance(MetronomeFragmentDestination())
+fun getMetronomeFragment(songId: String? = null) = NavigationInstance(MetronomeFragmentDestination(songId))
 
 
 @Composable
 @Preview
 private fun UI(
-    state: MetronomeVM.VM.State = MetronomeVM.VM.State(),
+    state: MetronomeVM.VM.State = MetronomeVM.VM.State(songId = "songID"),
     intent: (MetronomeVM.VM.Intent) -> Unit = {}
 ) {
     Column(
@@ -83,5 +84,25 @@ private fun UI(
         Button(onClick = { intent(MetronomeVM.VM.Intent.Play()) }) {
             Text(text = "игрта")
         }
+        Button(onClick = { intent(MetronomeVM.VM.Intent.Stop()) }) {
+            Text(text = "стоп")
+        }
+        TextField(
+            value = state.songName,
+            onValueChange = {
+                intent(MetronomeVM.VM.Intent.SetName(it))
+            }
+        )
+        if (state.isShowSave) {
+            Button(onClick = { intent(MetronomeVM.VM.Intent.SaveSong()) }) {
+                Text(text = "save")
+            }
+        }
+        if (state.isShowDelete) {
+            Button(onClick = { intent(MetronomeVM.VM.Intent.DeleteSong()) }) {
+                Text(text = "delete")
+            }
+        }
+
     }
 }
