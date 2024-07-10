@@ -8,6 +8,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import kotlinx.coroutines.flow.Flow
 import org.koin.android.ext.koin.androidApplication
 import org.koin.core.parameter.parametersOf
@@ -23,24 +24,34 @@ class SongsDB {
 
     @androidx.room.Dao
     interface Dao {
+        /**
+         * Song
+         */
         @Query("select * from songs_table")
-        fun getAll(): Flow<List<SongEntity>>
+        fun getAllSongs(): Flow<List<SongEntity>>
 
         @Insert(onConflict = OnConflictStrategy.REPLACE)
-        fun save(song: SongEntity)
+        fun saveSongs(song: SongEntity)
 
         @Delete
-        fun delete(song: SongEntity)
+        fun deleteSongs(song: SongEntity)
 
-        @Query("select * from songs_table where id==:mId")
-        fun getSongByID(mId: String): Flow<SongEntity?>
+        /**
+         * PlayList
+         */
+        @Query("select * from play_list_table")
+        fun getAllPlayList(): Flow<List<PlayListEntity>>
+
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        fun savePlayList(playList: PlayListEntity)
     }
 
     @Database(
-        entities = [SongEntity::class], version = 1, exportSchema = true, autoMigrations = [
+        entities = [SongEntity::class, PlayListEntity::class], version = 1, exportSchema = true, autoMigrations = [
 
         ]
     )
+    @TypeConverters(SongDBConverter::class)
     abstract class DB : RoomDatabase() {
         abstract fun dao(): Dao
 

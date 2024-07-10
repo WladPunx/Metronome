@@ -5,10 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.wladkoshelev.metronome.MetronomeLDS
 import com.wladkoshelev.metronome.database.SongData
 import com.wladkoshelev.metronome.database.SongREP
-import com.wladkoshelev.metronome.database.SongSaveStatus
 import com.wladkoshelev.metronome.utils.flow.SingleFlowEvent
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,26 +29,18 @@ class MetronomeVM {
 
     fun mModule() = module {
         viewModel<VM> { (songID: String?) ->
-            val metronomeLDS = get<MetronomeLDS.Face> { MetronomeLDS().params() }
-            val songRep = get<SongREP.Face> { SongREP().params() }
             VM(
-                ucPlay = metronomeLDS::start,
-                ucStop = metronomeLDS::stop,
-                songId = songID,
-                ucSaveSong = songRep::saveSong,
-                ucDelete = songRep::deleteSong,
-                ucGetSongById = songRep::getSongById
+                songRep = get<SongREP.Face> { SongREP().params() },
+                metronomeLDS = get<MetronomeLDS.Face> { MetronomeLDS().params() },
+                songId = songID
             )
         }
     }
 
     class VM(
-        private val ucPlay: (beatsPerMinute: Int, tactSize: Int) -> Unit,
-        private val ucStop: () -> Unit,
+        private val metronomeLDS: MetronomeLDS.Face,
+        private val songRep: SongREP.Face,
         private val songId: String?,
-        private val ucSaveSong: suspend (SongData) -> SongSaveStatus,
-        private val ucDelete: suspend (SongData) -> Unit,
-        private val ucGetSongById: (id: String) -> Flow<SongData?>
     ) : ViewModel() {
         private val mDispatcher = Dispatchers.IO
         private val mScope = viewModelScope + mDispatcher
@@ -99,21 +89,21 @@ class MetronomeVM {
                     val mSpeed = _state.value.speed
                     val mTactSize = _state.value.tactSize
                     if (mSpeed != null && mTactSize != null) {
-                        ucPlay(mSpeed, mTactSize)
+                        metronomeLDS.start(mSpeed, mTactSize)
                     }
                 }
 
                 is Intent.NoFocus -> coerceMetronome()
-                is Intent.Stop -> ucStop()
+                is Intent.Stop -> metronomeLDS.stop()
                 is Intent.SetName -> _state.update { it.copy(songName = intent.name) }
 
                 is Intent.SaveSong -> mScope.launch {
                     coerceMetronome()
-                    ucSaveSong(getSongDataFromState())
+                    songRep.saveSong(getSongDataFromState())
                 }
 
                 is Intent.DeleteSong -> mScope.launch {
-                    ucDelete(getSongDataFromState())
+                    songRep.deleteSong(getSongDataFromState())
                 }
             }
         }
@@ -129,7 +119,9 @@ class MetronomeVM {
 
         private val currentSongFromDB = _state.map { it.songId }.distinctUntilChanged()
             .flatMapLatest {
-                ucGetSongById(it)
+                songRep.allSongs.map {
+                    it.find { it.id == songId }
+                }
             }.stateIn(mScope, SharingStarted.Eagerly, null)
 
         // listener current song from db
@@ -173,7 +165,7 @@ class MetronomeVM {
         }
 
         override fun onCleared() {
-            ucStop()
+            metronomeLDS.stop()
             super.onCleared()
         }
 

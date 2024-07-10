@@ -1,8 +1,8 @@
-package com.wladkoshelev.metronome.ui.songs
+package com.wladkoshelev.metronome.ui.playlist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.wladkoshelev.metronome.database.SongData
+import com.wladkoshelev.metronome.database.PlayListData
 import com.wladkoshelev.metronome.database.SongREP
 import com.wladkoshelev.metronome.utils.flow.SingleFlowEvent
 import kotlinx.coroutines.Dispatchers
@@ -15,56 +15,59 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
 
-class AllSongsVM {
+class PlayListsVM {
 
     fun params() = parametersOf()
 
     fun mModule() = module {
         viewModel<VM> {
             VM(
-                songRep = get<SongREP.Face> { SongREP().params() }
+                songREP = get<SongREP.Face> { SongREP().params() }
             )
         }
     }
 
     class VM(
-        private val songRep: SongREP.Face
+        private val songREP: SongREP.Face
     ) : ViewModel() {
         private val mDispatcher = Dispatchers.IO
         private val mScope = viewModelScope + mDispatcher
 
         data class State(
-            val songsList: List<SongData> = emptyList()
+            val allPlayLists: List<PlayListData> = emptyList()
         )
 
         private val _state = MutableStateFlow(State())
         val state = _state.asStateFlow()
 
         sealed interface Event {
-            data class NavigateToMetronomeWithSong(val songId: String) : Event
+            class CreateNewPlatList : Event
+            class EditPlayList(val playListID : String) : Event
         }
 
         private val _event = SingleFlowEvent<Event>(mScope)
         val event = _event.flow
 
         sealed interface Intent {
-            data class SongClick(val song: SongData) : Intent
+            class CreateNewPlayList() : Intent
+            class EditPlayList(val playListID: String) : Intent
         }
 
         fun sendIntent(intent: Intent) {
             when (intent) {
-                is Intent.SongClick -> _event.emit(Event.NavigateToMetronomeWithSong(intent.song.id))
+                is Intent.CreateNewPlayList -> _event.emit(Event.CreateNewPlatList())
+                is Intent.EditPlayList -> _event.emit(Event.EditPlayList(intent.playListID))
             }
         }
 
-        // all songs flow listener
+        // all songs listener
         init {
             mScope.launch {
-                songRep.allSongs.collect { newList ->
-                    _state.update { it.copy(songsList = newList) }
+                songREP.allPlayLists.collect { list ->
+                    _state.update { it.copy(allPlayLists = list) }
                 }
             }
-        }
 
+        }
     }
 }

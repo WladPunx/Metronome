@@ -6,6 +6,8 @@ import com.wladkoshelev.metronome.database.SongREP
 import com.wladkoshelev.metronome.database.SongsDB
 import com.wladkoshelev.metronome.database.SongsLDS
 import com.wladkoshelev.metronome.ui.metronome.MetronomeVM
+import com.wladkoshelev.metronome.ui.playlist.CreateOrEditPlayListVM
+import com.wladkoshelev.metronome.ui.playlist.PlayListsVM
 import com.wladkoshelev.metronome.ui.songs.AllSongsVM
 
 object KoinModuleList {
@@ -21,6 +23,10 @@ object KoinModuleList {
         SongREP().mModule(),
 
 
-        AllSongsVM().mModule()
+        AllSongsVM().mModule(),
+
+
+        PlayListsVM().mModule(),
+        CreateOrEditPlayListVM().mModule()
     )
 }

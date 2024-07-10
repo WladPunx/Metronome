@@ -1,7 +1,6 @@
 package com.wladkoshelev.metronome.database
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
@@ -14,12 +13,8 @@ class SongREP {
 
     fun mModule() = module {
         single<Face> {
-            val lds = get<SongsLDS.Face> { SongsLDS().params() }
             Impl(
-                ucAllSongs = lds.allSongs,
-                ucSaveSong = lds::saveSong,
-                ucDeleteSong = lds::deleteSong,
-                ucGetSongById = lds::getSongById
+                songLds = get<SongsLDS.Face> { SongsLDS().params() }
             )
         }
     }
@@ -28,17 +23,16 @@ class SongREP {
         val allSongs: SharedFlow<List<SongData>>
         suspend fun saveSong(song: SongData): SongSaveStatus
         suspend fun deleteSong(song: SongData)
-        fun getSongById(id: String): Flow<SongData?>
+        val allPlayLists: SharedFlow<List<PlayListData>>
+        suspend fun savePlayList(playList: PlayListData)
     }
 
     class Impl(
-        private val ucAllSongs: SharedFlow<List<SongData>>,
-        private val ucSaveSong: suspend (SongData) -> Unit,
-        private val ucDeleteSong: suspend (SongData) -> Unit,
-        private val ucGetSongById: (id: String) -> Flow<SongData?>
+        private val songLds: SongsLDS.Face
     ) : Face {
 
-        override val allSongs = ucAllSongs
+        override val allSongs = songLds.allSongs
+        override val allPlayLists = songLds.allPlayList
 
         override suspend fun saveSong(song: SongData): SongSaveStatus = withContext(Dispatchers.IO) {
             val namesList = (allSongs.firstOrNull() ?: emptyList())
@@ -54,17 +48,19 @@ class SongREP {
                 mName.isEmpty() -> SongSaveStatus.EMPTY_NAME
                 namesList.contains(mName) -> SongSaveStatus.NAME_EXIST
                 else -> {
-                    ucSaveSong(song)
+                    songLds.saveSong(song)
                     SongSaveStatus.SUCCESS
                 }
             }
         }
 
         override suspend fun deleteSong(song: SongData): Unit = withContext(Dispatchers.IO) {
-            ucDeleteSong(song)
+            songLds.deleteSong(song)
         }
 
-        override fun getSongById(id: String) = ucGetSongById(id)
+        override suspend fun savePlayList(playList: PlayListData): Unit = withContext(Dispatchers.IO) {
+            songLds.savePlayList(playList)
+        }
 
     }
 }

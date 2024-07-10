@@ -2,11 +2,8 @@ package com.wladkoshelev.metronome.database
 
 import com.wladkoshelev.metronome.utils.flow.FlowShareWhileSubscribed.shareWhileSubscribed
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -20,15 +17,9 @@ class SongsLDS {
 
     fun mModule() = module {
         single<Face> {
-            val dao = get<SongsDB.Dao> { SongsDB().params() }
-            val mapper = get<SongEntityMapper.Face> { SongEntityMapper().params() }
             Impl(
-                ucAllSongs = dao.getAll(),
-                ucSaveSong = dao::save,
-                ucDataToEntity = mapper::dataToEntity,
-                ucEntityToData = mapper::entityToData,
-                ucDelete = dao::delete,
-                ucGetSongById = dao::getSongByID
+                songDao = get<SongsDB.Dao> { SongsDB().params() },
+                mapper = get<SongEntityMapper.Face> { SongEntityMapper().params() }
             )
         }
     }
@@ -37,39 +28,61 @@ class SongsLDS {
         val allSongs: SharedFlow<List<SongData>>
         suspend fun saveSong(song: SongData)
         suspend fun deleteSong(song: SongData)
-        fun getSongById(id: String): Flow<SongData?>
+        suspend fun savePlayList(playList: PlayListData)
+        val allPlayList: SharedFlow<List<PlayListData>>
     }
 
     class Impl(
-        private val ucAllSongs: Flow<List<SongEntity>>,
-        private val ucSaveSong: (song: SongEntity) -> Unit,
-        private val ucEntityToData: (SongEntity) -> SongData,
-        private val ucDataToEntity: (SongData, Long) -> SongEntity,
-        private val ucDelete: (SongEntity) -> Unit,
-        private val ucGetSongById: (id: String) -> Flow<SongEntity?>
+        private val songDao: SongsDB.Dao,
+        private val mapper: SongEntityMapper.Face
     ) : Face {
 
-        override val allSongs = ucAllSongs.map {
+        /**
+         * Songs
+         */
+        override val allSongs = songDao.getAllSongs().map {
             it
                 .sortedByDescending { it.date }
-                .map { ucEntityToData(it) }
+                .map { mapper.entityToData(it) }
         }.shareWhileSubscribed()
 
         override suspend fun saveSong(song: SongData): Unit = withContext(Dispatchers.IO) {
-            val songSaveDate = ucAllSongs.firstOrNull()?.find { it.id == song.id }?.date ?: Calendar.getInstance().time.time
-            ucSaveSong(ucDataToEntity(song, songSaveDate))
+            val songSaveDate = songDao.getAllSongs().firstOrNull()?.find { it.id == song.id }?.date ?: Calendar.getInstance().time.time
+            songDao.saveSongs(mapper.dataToEntity(song, songSaveDate))
         }
 
         override suspend fun deleteSong(song: SongData): Unit = withContext(Dispatchers.IO) {
-            ucDelete(ucDataToEntity(song, 0))
+            songDao.deleteSongs(mapper.dataToEntity(song, 0))
         }
 
-        override fun getSongById(id: String) = ucGetSongById(id)
-            .map {
-                it?.let(ucEntityToData)
+
+        /**
+         * Playlist
+         */
+
+        override val allPlayList = songDao.getAllPlayList().combine(allSongs) { listPlaylist, allSong ->
+            listPlaylist.map {
+                PlayListData(
+                    name = it.name,
+                    id = it.id,
+                    songsIdList = mutableListOf<SongData>().apply {
+                        it.songsIdList.forEach { songId ->
+                            allSong.find { it.id == songId }?.let { add(it) }
+                        }
+                    }
+                )
             }
-            .buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            .distinctUntilChanged()
+        }.shareWhileSubscribed()
+
+        override suspend fun savePlayList(playList: PlayListData): Unit = withContext(Dispatchers.IO) {
+            songDao.savePlayList(
+                PlayListEntity(
+                    id = playList.id,
+                    name = playList.name,
+                    songsIdList = playList.songsIdList.map { it.id }
+                )
+            )
+        }
 
     }
 }

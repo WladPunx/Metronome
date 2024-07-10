@@ -10,6 +10,7 @@ import androidx.navigation.NavController
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.wladkoshelev.metronome.ui.metronome.getMetronomeFragment
+import com.wladkoshelev.metronome.ui.playlist.getPlayListsFragment
 import com.wladkoshelev.metronome.ui.songs.getAllSongsFragment
 import com.wladkoshelev.metronome.utils.NavigationInstance.Companion.myNavigate
 
@@ -23,6 +24,9 @@ fun MainFragment(navController: NavController) {
         }
         Button(onClick = { navController.myNavigate(getAllSongsFragment()) }) {
             Text(text = "все песни")
+        }
+        Button(onClick = { navController.myNavigate(getPlayListsFragment()) }) {
+            Text(text = "плейлисты")
         }
     }
 }
