@@ -7,10 +7,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
+import java.util.Calendar
 
 class SongsLDS {
 
@@ -23,8 +25,8 @@ class SongsLDS {
             Impl(
                 ucAllSongs = dao.getAll(),
                 ucSaveSong = dao::save,
-                ucDataToEntity = mapper::mapDataToEntity,
-                ucEntityToData = mapper::mapEntityToData,
+                ucDataToEntity = mapper::dataToEntity,
+                ucEntityToData = mapper::entityToData,
                 ucDelete = dao::delete,
                 ucGetSongById = dao::getSongByID
             )
@@ -42,23 +44,24 @@ class SongsLDS {
         private val ucAllSongs: Flow<List<SongEntity>>,
         private val ucSaveSong: (song: SongEntity) -> Unit,
         private val ucEntityToData: (SongEntity) -> SongData,
-        private val ucDataToEntity: (SongData) -> SongEntity,
+        private val ucDataToEntity: (SongData, Long) -> SongEntity,
         private val ucDelete: (SongEntity) -> Unit,
         private val ucGetSongById: (id: String) -> Flow<SongEntity?>
     ) : Face {
 
         override val allSongs = ucAllSongs.map {
-            it.map {
-                ucEntityToData(it)
-            }
+            it
+                .sortedByDescending { it.date }
+                .map { ucEntityToData(it) }
         }.shareWhileSubscribed()
 
         override suspend fun saveSong(song: SongData): Unit = withContext(Dispatchers.IO) {
-            ucSaveSong(ucDataToEntity(song))
+            val songSaveDate = ucAllSongs.firstOrNull()?.find { it.id == song.id }?.date ?: Calendar.getInstance().time.time
+            ucSaveSong(ucDataToEntity(song, songSaveDate))
         }
 
         override suspend fun deleteSong(song: SongData): Unit = withContext(Dispatchers.IO) {
-            ucDelete(ucDataToEntity(song))
+            ucDelete(ucDataToEntity(song, 0))
         }
 
         override fun getSongById(id: String) = ucGetSongById(id)

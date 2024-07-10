@@ -1,4 +1,4 @@
-package com.wladkoshelev.metronome.ui_metranome
+package com.wladkoshelev.metronome.ui.metronome
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize

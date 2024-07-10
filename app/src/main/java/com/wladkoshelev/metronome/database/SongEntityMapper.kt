@@ -16,28 +16,27 @@ class SongEntityMapper {
     }
 
     interface Face {
-        fun mapEntityToData(entity: SongEntity): SongData
-        fun mapDataToEntity(data: SongData): SongEntity
+        fun dataToEntity(data: SongData, date: Long): SongEntity
+        fun entityToData(entity: SongEntity): SongData
     }
 
     class Impl : Face {
 
-        override fun mapEntityToData(entity: SongEntity) = entity.toData()
-        private fun SongEntity.toData() = SongData(
-            id = id,
-            name = name,
-            speed = speed,
-            tactSize = tactSize
+        override fun dataToEntity(data: SongData, date: Long) = SongEntity(
+            id = data.id,
+            name = data.name,
+            speed = data.speed,
+            tactSize = data.tactSize,
+            date = date
         )
 
-
-        override fun mapDataToEntity(data: SongData) = data.toEntity()
-        private fun SongData.toEntity() = SongEntity(
-            id = id,
-            name = name,
-            speed = speed,
-            tactSize = tactSize
+        override fun entityToData(entity: SongEntity) = SongData(
+            id = entity.id,
+            name = entity.name,
+            speed = entity.speed,
+            tactSize = entity.tactSize,
         )
+
 
     }
 }

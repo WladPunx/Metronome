@@ -8,5 +8,6 @@ data class SongEntity(
     @PrimaryKey val id: String,
     val name: String,
     val speed: Int,
-    val tactSize: Int
+    val tactSize: Int,
+    val date: Long
 )
