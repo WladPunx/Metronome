@@ -27,86 +27,71 @@ import com.wladkoshelev.metronome.utils.NavigationInstance
 import org.koin.androidx.compose.koinViewModel
 
 
-fun getCreateOrEditPlayListFragment(playListID: String? = null) = NavigationInstance(CreateOrEditPlayListFragmentDestination(playListID))
+class CreateOrEditPlayListFragment {
+    companion object {
 
-@RootNavGraph
-@Destination
-@Composable
-fun CreateOrEditPlayListFragment(
-    playListId: String?
-) {
-    val vm = koinViewModel<CreateOrEditPlayListVM.VM> { CreateOrEditPlayListVM().params(playListId) }
-    val state by vm.state.collectAsStateWithLifecycle()
-    val intent = remember { vm::sendIntent }
-    UI(
-        state = state,
-        intent = intent
-    )
-}
+        fun get(playListID: String? = null) = NavigationInstance(CreateOrEditPlayListFragmentDestination(playListID))
 
-@Composable
-@Preview
-private fun UI(
-    state: CreateOrEditPlayListVM.VM.State = CreateOrEditPlayListVM.VM.State(playListId = "gg"),
-    intent: (CreateOrEditPlayListVM.VM.Intent) -> Unit = {}
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        TextField(
-            value = state.name,
-            onValueChange = {
-                intent(CreateOrEditPlayListVM.VM.Intent.SetName(it))
-            }
-        )
-        Button(onClick = { intent(CreateOrEditPlayListVM.VM.Intent.SavePlayList()) }) {
-            Text(text = "save")
+        @RootNavGraph
+        @Destination
+        @Composable
+        fun CreateOrEditPlayListFragment(
+            playListId: String?
+        ) {
+            val vm = koinViewModel<CreateOrEditPlayListVM.VM> { CreateOrEditPlayListVM().params(playListId) }
+            val state by vm.state.collectAsStateWithLifecycle()
+            val intent = remember { vm::sendIntent }
+            CreateOrEditPlayListFragment().UI(
+                state = state,
+                intent = intent
+            )
         }
-        LazyColumn {
-            items(state.songsWithCheck) {
-                SongForPlayListUI(item = it, onCheckChange = { intent(CreateOrEditPlayListVM.VM.Intent.CheckUnCheckSong(it)) })
+    }
+
+
+    @Composable
+    @Preview
+    private fun UI(
+        state: CreateOrEditPlayListVM.VM.State = CreateOrEditPlayListVM.VM.State(playListId = "gg"),
+        intent: (CreateOrEditPlayListVM.VM.Intent) -> Unit = {}
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            TextField(
+                value = state.name,
+                onValueChange = {
+                    intent(CreateOrEditPlayListVM.VM.Intent.SetName(it))
+                }
+            )
+            Button(onClick = { intent(CreateOrEditPlayListVM.VM.Intent.SavePlayList()) }) {
+                Text(text = "save")
+            }
+            LazyColumn {
+                items(state.songsWithCheck) {
+                    SongForPlayListUI(item = it, onCheckChange = { intent(CreateOrEditPlayListVM.VM.Intent.CheckUnCheckSong(it)) })
+                }
             }
         }
     }
-}
 
-@Composable
-private fun SongForPlayListUI(
-    modifier: Modifier = Modifier,
-    item: Pair<SongData, Boolean>,
-    onCheckChange: () -> Unit
-) {
-    Box(
-        modifier = modifier
-            .width(IntrinsicSize.Max)
-            .height(IntrinsicSize.Max)
+    @Composable
+    private fun SongForPlayListUI(
+        modifier: Modifier = Modifier,
+        item: Pair<SongData, Boolean>,
+        onCheckChange: () -> Unit
     ) {
-        Row {
-            Checkbox(checked = item.second, onCheckedChange = { onCheckChange() })
-            Text(text = item.first.name)
+        Box(
+            modifier = modifier
+                .width(IntrinsicSize.Max)
+                .height(IntrinsicSize.Max)
+        ) {
+            Row {
+                Checkbox(checked = item.second, onCheckedChange = { onCheckChange() })
+                Text(text = item.first.name)
+            }
         }
     }
+
 }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        

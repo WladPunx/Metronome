@@ -27,86 +27,90 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.wladkoshelev.metronome.database.SongData
 import com.wladkoshelev.metronome.destinations.AllSongsFragmentDestination
-import com.wladkoshelev.metronome.ui.metronome.getMetronomeFragment
+import com.wladkoshelev.metronome.ui.metronome.MetronomeFragment
 import com.wladkoshelev.metronome.utils.NavigationInstance
 import com.wladkoshelev.metronome.utils.NavigationInstance.Companion.myNavigate
 import org.koin.androidx.compose.koinViewModel
 
 
-fun getAllSongsFragment() = NavigationInstance(AllSongsFragmentDestination())
+class AllSongsFragment {
+    companion object {
+        fun get() = NavigationInstance(AllSongsFragmentDestination())
 
-@RootNavGraph
-@Destination
-@Composable
-fun AllSongsFragment(
-    navController: NavController
-) {
-    val vm = koinViewModel<AllSongsVM.VM> { AllSongsVM().params() }
-    val state by vm.state.collectAsStateWithLifecycle()
-    val intent = remember { vm::sendIntent }
-    UI(
-        state = state,
-        intent = intent
-    )
+        @RootNavGraph
+        @Destination
+        @Composable
+        fun AllSongsFragment(
+            navController: NavController
+        ) {
+            val vm = koinViewModel<AllSongsVM.VM> { AllSongsVM().params() }
+            val state by vm.state.collectAsStateWithLifecycle()
+            val intent = remember { vm::sendIntent }
+            AllSongsFragment().UI(
+                state = state,
+                intent = intent
+            )
 
-    LaunchedEffect(Unit) {
-        vm.event.collect {
-            when (it) {
-                is AllSongsVM.VM.Event.NavigateToMetronomeWithSong -> navController.myNavigate(getMetronomeFragment(it.songId))
+            LaunchedEffect(Unit) {
+                vm.event.collect {
+                    when (it) {
+                        is AllSongsVM.VM.Event.NavigateToMetronomeWithSong -> navController.myNavigate(MetronomeFragment.get(it.songId))
+                    }
+                }
             }
         }
     }
-}
 
-@Composable
-@Preview
-private fun UI(
-    state: AllSongsVM.VM.State = AllSongsVM.VM.State(),
-    intent: (AllSongsVM.VM.Intent) -> Unit = {}
-) {
-    Column(
-        modifier = Modifier.fillMaxSize()
+    @Composable
+    @Preview
+    private fun UI(
+        state: AllSongsVM.VM.State = AllSongsVM.VM.State(),
+        intent: (AllSongsVM.VM.Intent) -> Unit = {}
     ) {
-        LazyColumn {
-            items(state.songsList) {
-                SongItem(
-                    modifier = Modifier
-                        .clickable { intent(AllSongsVM.VM.Intent.SongClick(it)) },
-                    song = it
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(Color.Black)
-                )
-                Spacer(modifier = Modifier.height(5.dp))
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            LazyColumn {
+                items(state.songsList) {
+                    SongItem(
+                        modifier = Modifier
+                            .clickable { intent(AllSongsVM.VM.Intent.SongClick(it)) },
+                        song = it
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(Color.Black)
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
+                }
             }
         }
     }
-}
 
-@Composable
-@Preview
-private fun SongItem(
-    modifier: Modifier = Modifier,
-    song: SongData = SongData(
-        id = "id",
-        name = "name",
-        speed = 45,
-        tactSize = 23
-    )
-) {
-    Box(
-        modifier = modifier
-            .width(IntrinsicSize.Max)
-            .height(IntrinsicSize.Max)
+    @Composable
+    @Preview
+    private fun SongItem(
+        modifier: Modifier = Modifier,
+        song: SongData = SongData(
+            id = "id",
+            name = "name",
+            speed = 45,
+            tactSize = 23
+        )
     ) {
-        Column {
-            Text(text = "id - ${song.id}")
-            Text(text = "name - ${song.name}")
-            Text(text = "speed - ${song.speed}")
-            Text(text = "tactSize - ${song.tactSize}")
+        Box(
+            modifier = modifier
+                .width(IntrinsicSize.Max)
+                .height(IntrinsicSize.Max)
+        ) {
+            Column {
+                Text(text = "id - ${song.id}")
+                Text(text = "name - ${song.name}")
+                Text(text = "speed - ${song.speed}")
+                Text(text = "tactSize - ${song.tactSize}")
+            }
         }
     }
 }

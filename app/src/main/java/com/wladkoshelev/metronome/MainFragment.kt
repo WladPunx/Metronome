@@ -9,24 +9,29 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
-import com.wladkoshelev.metronome.ui.metronome.getMetronomeFragment
-import com.wladkoshelev.metronome.ui.playlist.getPlayListsFragment
-import com.wladkoshelev.metronome.ui.songs.getAllSongsFragment
+import com.wladkoshelev.metronome.ui.metronome.MetronomeFragment
+import com.wladkoshelev.metronome.ui.playlist.PlayListsFragment
+import com.wladkoshelev.metronome.ui.songs.AllSongsFragment
 import com.wladkoshelev.metronome.utils.NavigationInstance.Companion.myNavigate
 
-@RootNavGraph(start = true)
-@Destination
-@Composable
-fun MainFragment(navController: NavController) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Button(onClick = { navController.myNavigate(getMetronomeFragment()) }) {
-            Text(text = "метраном")
-        }
-        Button(onClick = { navController.myNavigate(getAllSongsFragment()) }) {
-            Text(text = "все песни")
-        }
-        Button(onClick = { navController.myNavigate(getPlayListsFragment()) }) {
-            Text(text = "плейлисты")
+
+class MainFragment {
+    companion object {
+        @RootNavGraph(start = true)
+        @Destination
+        @Composable
+        fun MainFragment(navController: NavController) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Button(onClick = { navController.myNavigate(MetronomeFragment.get()) }) {
+                    Text(text = "метраном")
+                }
+                Button(onClick = { navController.myNavigate(AllSongsFragment.get()) }) {
+                    Text(text = "все песни")
+                }
+                Button(onClick = { navController.myNavigate(PlayListsFragment.get()) }) {
+                    Text(text = "плейлисты")
+                }
+            }
         }
     }
 }

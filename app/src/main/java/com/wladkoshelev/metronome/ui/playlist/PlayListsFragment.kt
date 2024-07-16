@@ -32,87 +32,88 @@ import com.wladkoshelev.metronome.utils.NavigationInstance
 import com.wladkoshelev.metronome.utils.NavigationInstance.Companion.myNavigate
 import org.koin.androidx.compose.koinViewModel
 
-fun getPlayListsFragment() = NavigationInstance(PlayListsFragmentDestination())
+class PlayListsFragment {
+    companion object {
+        fun get() = NavigationInstance(PlayListsFragmentDestination())
 
-
-@RootNavGraph
-@Destination
-@Composable
-fun PlayListsFragment(
-    navController: NavController
-) {
-    val vm = koinViewModel<PlayListsVM.VM> { PlayListsVM().params() }
-    val state by vm.state.collectAsStateWithLifecycle()
-    val intent = remember { vm::sendIntent }
-    UI(
-        state = state,
-        intent = intent
-    )
-    LaunchedEffect(Unit) {
-        vm.event.collect {
-            when (it) {
-                is PlayListsVM.VM.Event.CreateNewPlatList -> navController.myNavigate(getCreateOrEditPlayListFragment())
-                is PlayListsVM.VM.Event.EditPlayList -> navController.myNavigate(getCreateOrEditPlayListFragment(it.playListID))
+        @RootNavGraph
+        @Destination
+        @Composable
+        fun PlayListsFragment(
+            navController: NavController
+        ) {
+            val vm = koinViewModel<PlayListsVM.VM> { PlayListsVM().params() }
+            val state by vm.state.collectAsStateWithLifecycle()
+            val intent = remember { vm::sendIntent }
+            PlayListsFragment().UI(
+                state = state,
+                intent = intent
+            )
+            LaunchedEffect(Unit) {
+                vm.event.collect {
+                    when (it) {
+                        is PlayListsVM.VM.Event.CreateNewPlatList -> navController.myNavigate(CreateOrEditPlayListFragment.get())
+                        is PlayListsVM.VM.Event.EditPlayList -> navController.myNavigate(CreateOrEditPlayListFragment.get(it.playListID))
+                    }
+                }
             }
         }
     }
-}
 
-
-@Composable
-@Preview
-private fun UI(
-    state: PlayListsVM.VM.State = PlayListsVM.VM.State(),
-    intent: (PlayListsVM.VM.Intent) -> Unit = {}
-) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Button(onClick = { intent(PlayListsVM.VM.Intent.CreateNewPlayList()) }) {
-            Text(text = "создать новый плейлист")
-        }
-        LazyColumn {
-            items(state.allPlayLists) {
-                PlayListUI(
-                    modifier = Modifier.clickable {
-                        intent(PlayListsVM.VM.Intent.EditPlayList(it.id))
-                    },
-                    playList = it
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(Color.Black)
-                )
-                Spacer(modifier = Modifier.height(5.dp))
-            }
-        }
-    }
-}
-
-
-@Composable
-@Preview
-private fun PlayListUI(
-    modifier: Modifier = Modifier,
-    playList: PlayListData = PlayListData(
-        id = "id",
-        name = "name",
-        songsIdList = emptyList()
-    )
-) {
-    Box(
-        modifier = modifier
-            .width(IntrinsicSize.Max)
-            .height(IntrinsicSize.Max)
+    @Composable
+    @Preview
+    private fun UI(
+        state: PlayListsVM.VM.State = PlayListsVM.VM.State(),
+        intent: (PlayListsVM.VM.Intent) -> Unit = {}
     ) {
-        Column {
-            Text(text = "id - ${playList.id}")
-            Text(text = "name - ${playList.name}")
-            playList.songsIdList.map { it.name }.forEach {
-                Text(text = "song - ${it}")
+        Column(modifier = Modifier.fillMaxSize()) {
+            Button(onClick = { intent(PlayListsVM.VM.Intent.CreateNewPlayList()) }) {
+                Text(text = "создать новый плейлист")
+            }
+            LazyColumn {
+                items(state.allPlayLists) {
+                    PlayListUI(
+                        modifier = Modifier.clickable {
+                            intent(PlayListsVM.VM.Intent.EditPlayList(it.id))
+                        },
+                        playList = it
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(Color.Black)
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
+                }
             }
         }
     }
+
+
+    @Composable
+    @Preview
+    private fun PlayListUI(
+        modifier: Modifier = Modifier,
+        playList: PlayListData = PlayListData(
+            id = "id",
+            name = "name",
+            songsIdList = emptyList()
+        )
+    ) {
+        Box(
+            modifier = modifier
+                .width(IntrinsicSize.Max)
+                .height(IntrinsicSize.Max)
+        ) {
+            Column {
+                Text(text = "id - ${playList.id}")
+                Text(text = "name - ${playList.name}")
+                playList.songsIdList.map { it.name }.forEach {
+                    Text(text = "song - ${it}")
+                }
+            }
+        }
+    }
+
 }
-
-
