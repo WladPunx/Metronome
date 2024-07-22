@@ -34,6 +34,8 @@ class SongREP {
         override val allSongs = songLds.allSongs
         override val allPlayLists = songLds.allPlayList
 
+
+        /** сохранение песни с валидацией [SongSaveStatus] **/
         override suspend fun saveSong(song: SongData): SongSaveStatus = withContext(Dispatchers.IO) {
             val namesList = (allSongs.firstOrNull() ?: emptyList())
                 .filterNot {

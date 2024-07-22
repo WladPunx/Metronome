@@ -24,9 +24,6 @@ class SongsDB {
 
     @androidx.room.Dao
     interface Dao {
-        /**
-         * Song
-         */
         @Query("select * from songs_table")
         fun getAllSongs(): Flow<List<SongEntity>>
 
@@ -36,9 +33,6 @@ class SongsDB {
         @Delete
         fun deleteSongs(song: SongEntity)
 
-        /**
-         * PlayList
-         */
         @Query("select * from play_list_table")
         fun getAllPlayList(): Flow<List<PlayListEntity>>
 

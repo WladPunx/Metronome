@@ -35,6 +35,12 @@ class MetronomeLDS {
     class Impl : Face {
 
         private val mScope = MainScope() + Dispatchers.IO
+
+        /** список заготовленных таймеров (текущий и следующий такт)
+         *
+        наполняется в методе {[setNewTact]}
+
+        отменяются и очищаются в методе {[stop]} */
         private val timerList = MutableStateFlow(listOf<Timer>())
 
         override fun stop() {
@@ -77,15 +83,19 @@ class MetronomeLDS {
                     }
                     timer.schedule(
                         timerTask {
+                            /** проигрывание бита должно быть первым. все остальные вычисления - после */
                             toneGenerator.startTone(
                                 if (index == 0) ToneGenerator.TONE_PROP_BEEP else ToneGenerator.TONE_CDMA_PIP,
                                 150
                             )
+                            /** удаление текущего таймера из {[timerList]}, чтобы поддерживать в списке только актуальные таймеры */
                             timerList.update {
                                 it.toMutableList().apply {
                                     remove(timer)
                                 }
                             }
+                            /** генерация следующего такта, если текущий бит является сильной долей
+                            по итогу в {[timerList]} будет находится текущий такст + следующий */
                             if (index == 0) {
                                 setNewTact(
                                     toneGenerator = toneGenerator,

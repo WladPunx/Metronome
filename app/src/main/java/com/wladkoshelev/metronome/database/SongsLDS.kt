@@ -37,29 +37,31 @@ class SongsLDS {
         private val mapper: SongEntityMapper.Face
     ) : Face {
 
-        /**
-         * Songs
-         */
+        /** список всех песен с учетом времени их создания. время создания указывается в {[saveSong]} */
         override val allSongs = songDao.getAllSongs().map {
             it
                 .sortedByDescending { it.date }
                 .map { mapper.entityToData(it) }
         }.shareWhileSubscribed()
 
+
+        /** сохранение песни с учетом времени время.
+         *
+        нужно для сортировки песен в {[allSongs]} */
         override suspend fun saveSong(song: SongData): Unit = withContext(Dispatchers.IO) {
             val songSaveDate = songDao.getAllSongs().firstOrNull()?.find { it.id == song.id }?.date ?: Calendar.getInstance().time.time
             songDao.saveSongs(mapper.dataToEntity(song, songSaveDate))
         }
 
+        /** удаление песни */
         override suspend fun deleteSong(song: SongData): Unit = withContext(Dispatchers.IO) {
             songDao.deleteSongs(mapper.dataToEntity(song, 0))
         }
 
 
-        /**
-         * Playlist
-         */
-
+        /** список всех плейлистов на основе данных из БД и {[allSongs]}
+         *
+        в БД для плейлиста сохраняется лишь ID'шник песни {[SongData.id]} {[PlayListEntity.songsIdList]} */
         override val allPlayList = songDao.getAllPlayList().combine(allSongs) { listPlaylist, allSong ->
             listPlaylist.map {
                 PlayListData(
@@ -74,6 +76,7 @@ class SongsLDS {
             }
         }.shareWhileSubscribed()
 
+        /** сохранение плейлиста */
         override suspend fun savePlayList(playList: PlayListData): Unit = withContext(Dispatchers.IO) {
             songDao.savePlayList(
                 PlayListEntity(
