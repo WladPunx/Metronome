@@ -1,5 +1,6 @@
 package com.wladkoshelev.metronome.database
 
+import com.wladkoshelev.metronome.utils.SafeScope
 import com.wladkoshelev.metronome.utils.flow.FlowShareWhileSubscribed.shareWhileSubscribed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharedFlow
@@ -37,12 +38,14 @@ class SongsLDS {
         private val mapper: SongEntityMapper.Face
     ) : Face {
 
+        private val mScope = SafeScope.get()
+
         /** список всех песен с учетом времени их создания. время создания указывается в {[saveSong]} */
         override val allSongs = songDao.getAllSongs().map {
             it
                 .sortedByDescending { it.date }
                 .map { mapper.entityToData(it) }
-        }.shareWhileSubscribed()
+        }.shareWhileSubscribed(mScope)
 
 
         /** сохранение песни с учетом времени время.
@@ -74,7 +77,7 @@ class SongsLDS {
                     }
                 )
             }
-        }.shareWhileSubscribed()
+        }.shareWhileSubscribed(mScope)
 
         /** сохранение плейлиста */
         override suspend fun savePlayList(playList: PlayListData): Unit = withContext(Dispatchers.IO) {

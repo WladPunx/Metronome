@@ -2,12 +2,10 @@ package com.wladkoshelev.metronome
 
 import android.media.AudioManager
 import android.media.ToneGenerator
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
+import com.wladkoshelev.metronome.utils.SafeScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
 import java.util.Calendar
@@ -34,7 +32,7 @@ class MetronomeLDS {
 
     class Impl : Face {
 
-        private val mScope = MainScope() + Dispatchers.IO
+        private val mScope = SafeScope.get()
 
         /** список заготовленных таймеров (текущий и следующий такт)
          *
