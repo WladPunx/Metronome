@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wladkoshelev.metronome.database.PlayListData
 import com.wladkoshelev.metronome.database.SongREP
+import com.wladkoshelev.metronome.utils.MDispatchers
 import com.wladkoshelev.metronome.utils.SafeScope.toSafeScope
 import com.wladkoshelev.metronome.utils.flow.SingleFlowEvent
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -30,7 +30,7 @@ class PlayListsVM {
     class VM(
         private val songREP: SongREP.Face
     ) : ViewModel() {
-        private val mScope = viewModelScope.toSafeScope(Dispatchers.IO)
+        private val mScope = viewModelScope.toSafeScope(MDispatchers.IO)
 
         data class State(
             val allPlayLists: List<PlayListData> = emptyList()

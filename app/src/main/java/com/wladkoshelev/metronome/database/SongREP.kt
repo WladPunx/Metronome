@@ -1,6 +1,6 @@
 package com.wladkoshelev.metronome.database
 
-import kotlinx.coroutines.Dispatchers
+import com.wladkoshelev.metronome.utils.MDispatchers
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
@@ -36,7 +36,7 @@ class SongREP {
 
 
         /** сохранение песни с валидацией [SongSaveStatus] **/
-        override suspend fun saveSong(song: SongData): SongSaveStatus = withContext(Dispatchers.IO) {
+        override suspend fun saveSong(song: SongData): SongSaveStatus = withContext(MDispatchers.IO) {
             val namesList = (allSongs.firstOrNull() ?: emptyList())
                 .filterNot {
                     it.id == song.id
@@ -56,11 +56,11 @@ class SongREP {
             }
         }
 
-        override suspend fun deleteSong(song: SongData): Unit = withContext(Dispatchers.IO) {
+        override suspend fun deleteSong(song: SongData): Unit = withContext(MDispatchers.IO) {
             songLds.deleteSong(song)
         }
 
-        override suspend fun savePlayList(playList: PlayListData): Unit = withContext(Dispatchers.IO) {
+        override suspend fun savePlayList(playList: PlayListData): Unit = withContext(MDispatchers.IO) {
             songLds.savePlayList(playList)
         }
 

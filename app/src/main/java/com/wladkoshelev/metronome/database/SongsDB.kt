@@ -2,7 +2,6 @@ package com.wladkoshelev.metronome.database
 
 import android.app.Application
 import androidx.room.Database
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -30,8 +29,8 @@ class SongsDB {
         @Insert(onConflict = OnConflictStrategy.REPLACE)
         fun saveSongs(song: SongEntity)
 
-        @Delete
-        fun deleteSongs(song: SongEntity)
+        @Query("delete from songs_table where id==:songId")
+        fun deleteSong(songId: String)
 
         @Query("select * from play_list_table")
         fun getAllPlayList(): Flow<List<PlayListEntity>>

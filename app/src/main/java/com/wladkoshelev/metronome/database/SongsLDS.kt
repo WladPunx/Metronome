@@ -1,8 +1,8 @@
 package com.wladkoshelev.metronome.database
 
+import com.wladkoshelev.metronome.utils.MDispatchers
 import com.wladkoshelev.metronome.utils.SafeScope
 import com.wladkoshelev.metronome.utils.flow.FlowShareWhileSubscribed.shareWhileSubscribed
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
@@ -19,8 +19,7 @@ class SongsLDS {
     fun mModule() = module {
         single<Face> {
             Impl(
-                songDao = get<SongsDB.Dao> { SongsDB().params() },
-                mapper = get<SongEntityMapper.Face> { SongEntityMapper().params() }
+                songDao = get<SongsDB.Dao> { SongsDB().params() }
             )
         }
     }
@@ -34,8 +33,7 @@ class SongsLDS {
     }
 
     class Impl(
-        private val songDao: SongsDB.Dao,
-        private val mapper: SongEntityMapper.Face
+        private val songDao: SongsDB.Dao
     ) : Face {
 
         private val mScope = SafeScope.get()
@@ -44,21 +42,21 @@ class SongsLDS {
         override val allSongs = songDao.getAllSongs().map {
             it
                 .sortedByDescending { it.date }
-                .map { mapper.entityToData(it) }
+                .map { it.toData() }
         }.shareWhileSubscribed(mScope)
 
 
         /** сохранение песни с учетом времени время.
          *
         нужно для сортировки песен в {[allSongs]} */
-        override suspend fun saveSong(song: SongData): Unit = withContext(Dispatchers.IO) {
+        override suspend fun saveSong(song: SongData): Unit = withContext(MDispatchers.IO) {
             val songSaveDate = songDao.getAllSongs().firstOrNull()?.find { it.id == song.id }?.date ?: Calendar.getInstance().time.time
-            songDao.saveSongs(mapper.dataToEntity(song, songSaveDate))
+            songDao.saveSongs(song.toEntity(songSaveDate))
         }
 
-        /** удаление песни */
-        override suspend fun deleteSong(song: SongData): Unit = withContext(Dispatchers.IO) {
-            songDao.deleteSongs(mapper.dataToEntity(song, 0))
+        /** удаление песни по ID */
+        override suspend fun deleteSong(song: SongData): Unit = withContext(MDispatchers.IO) {
+            songDao.deleteSong(song.id)
         }
 
 
@@ -80,7 +78,7 @@ class SongsLDS {
         }.shareWhileSubscribed(mScope)
 
         /** сохранение плейлиста */
-        override suspend fun savePlayList(playList: PlayListData): Unit = withContext(Dispatchers.IO) {
+        override suspend fun savePlayList(playList: PlayListData): Unit = withContext(MDispatchers.IO) {
             songDao.savePlayList(
                 PlayListEntity(
                     id = playList.id,
@@ -89,6 +87,25 @@ class SongsLDS {
                 )
             )
         }
+
+        /** Data to Entity
+         *
+         * с сохранением даты, используемой для сортировки в {[allSongs]} {[saveSong]} */
+        private fun SongData.toEntity(date: Long) = SongEntity(
+            id = id,
+            name = name,
+            speed = speed,
+            tactSize = tactSize,
+            date = date
+        )
+
+        /** Entity to Data */
+        private fun SongEntity.toData() = SongData(
+            id = id,
+            name = name,
+            speed = speed,
+            tactSize = tactSize,
+        )
 
     }
 }

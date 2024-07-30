@@ -2,7 +2,6 @@ package com.wladkoshelev.metronome.utils
 
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.SupervisorJob
@@ -24,6 +23,6 @@ object SafeScope {
     }
 
 
-    fun get(context: CoroutineContext = EmptyCoroutineContext) = MainScope().toSafeScope(Dispatchers.IO + context)
+    fun get(context: CoroutineContext = EmptyCoroutineContext) = MainScope().toSafeScope(MDispatchers.IO + context)
 
 }

@@ -6,7 +6,6 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import com.wladkoshelev.metronome.MetronomeLDS
-import com.wladkoshelev.metronome.database.SongEntityMapper
 import com.wladkoshelev.metronome.database.SongREP
 import com.wladkoshelev.metronome.database.SongsDB
 import com.wladkoshelev.metronome.database.SongsLDS
@@ -33,7 +32,6 @@ object MKoin {
 
 
                 SongsDB().mModule(),
-                SongEntityMapper().mModule(),
                 SongsLDS().mModule(),
                 SongREP().mModule(),
 
