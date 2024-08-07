@@ -5,10 +5,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
-import com.wladkoshelev.metronome.MetronomeLDS
 import com.wladkoshelev.metronome.database.SongREP
 import com.wladkoshelev.metronome.database.SongsDB
 import com.wladkoshelev.metronome.database.SongsLDS
+import com.wladkoshelev.metronome.metronome.MetronomeLDS
+import com.wladkoshelev.metronome.metronome.MetronomeREP
 import com.wladkoshelev.metronome.ui.metronome.MetronomeVM
 import com.wladkoshelev.metronome.ui.playlist.CreateOrEditPlayListVM
 import com.wladkoshelev.metronome.ui.playlist.PlayListsVM
@@ -28,6 +29,7 @@ object MKoin {
             androidContext(apl)
             modules(
                 MetronomeLDS().mModule(),
+                MetronomeREP().mModule(),
                 MetronomeVM().mModule(),
 
 

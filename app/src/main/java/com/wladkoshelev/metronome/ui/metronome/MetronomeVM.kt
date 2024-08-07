@@ -2,9 +2,10 @@ package com.wladkoshelev.metronome.ui.metronome
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.wladkoshelev.metronome.MetronomeLDS
 import com.wladkoshelev.metronome.database.SongData
 import com.wladkoshelev.metronome.database.SongREP
+import com.wladkoshelev.metronome.metronome.MetronomeREP
+import com.wladkoshelev.metronome.metronome.MetronomeStateData
 import com.wladkoshelev.metronome.utils.MDispatchers
 import com.wladkoshelev.metronome.utils.SafeScope.toSafeScope
 import com.wladkoshelev.metronome.utils.flow.SingleFlowEvent
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -31,26 +33,34 @@ class MetronomeVM {
         viewModel<VM> { (songID: String?) ->
             VM(
                 songRep = get<SongREP.Face> { SongREP().params() },
-                metronomeLDS = get<MetronomeLDS.Face> { MetronomeLDS().params() },
+                metronomeREP = get<MetronomeREP.Face> { MetronomeREP().params() },
                 songId = songID
             )
         }
     }
 
     class VM(
-        private val metronomeLDS: MetronomeLDS.Face,
+        private val metronomeREP: MetronomeREP.Face,
         private val songRep: SongREP.Face,
         songId: String?,
     ) : ViewModel() {
         private val mScope = viewModelScope.toSafeScope(MDispatchers.IO)
 
         data class State(
-            val speed: Int? = 100,
-            val tactSize: Int? = 4,
+            /** состояние метранома */
+            val metronomeState: MetronomeStateData = MetronomeStateData(),
+            /** ID песни. он или передан, если это уже существующая песня, либо создаться случайно */
             val songId: String,
+            /** имя песни, с которой она будет сохранена в БД */
             val songName: String = "",
+            /** можно ли сохранить песню в БД или она ничем не отличается */
             val isShowSave: Boolean = false,
-            val isShowDelete: Boolean = false
+            /** можно ли удалить песню? удалить песню, можно если она сохранена в БД */
+            val isShowDelete: Boolean = false,
+            /** статус АлертДиалога для редактирования Bmp */
+            val isShowEditBmp: Boolean = false,
+            /** статус АлертДиалога для редактирования размера такта */
+            val isShowEditTactSize: Boolean = false
         )
 
         private val _state = MutableStateFlow(
@@ -68,54 +78,39 @@ class MetronomeVM {
         val event = _event.flow
 
         sealed interface Intent {
-            data class SetSpeed(val speed: Int?) : Intent
-            data class SetSTactSize(val tactSize: Int?) : Intent
+            data class SetSpeed(val speed: Int) : Intent
+            data class SetSTactSize(val tactSize: Int) : Intent
             class Play : Intent
             class Stop : Intent
-            class NoFocus : Intent
             data class SetName(val name: String) : Intent
             class SaveSong : Intent
             class DeleteSong : Intent
+            data class IsShowEditBmp(val isShow: Boolean) : Intent
+            data class IsShowEditTactSize(val isShow: Boolean) : Intent
         }
 
         fun sendIntent(intent: Intent) {
             when (intent) {
-                is Intent.SetSpeed -> _state.update { it.copy(speed = intent.speed) }
-                is Intent.SetSTactSize -> _state.update { it.copy(tactSize = intent.tactSize) }
-
-                is Intent.Play -> {
-                    coerceMetronome()
-                    val mSpeed = _state.value.speed
-                    val mTactSize = _state.value.tactSize
-                    if (mSpeed != null && mTactSize != null) {
-                        metronomeLDS.start(mSpeed, mTactSize)
-                    }
-                }
-
-                is Intent.NoFocus -> coerceMetronome()
-                is Intent.Stop -> metronomeLDS.stop()
+                is Intent.SetSpeed -> metronomeREP.setBmp(intent.speed)
+                is Intent.SetSTactSize -> metronomeREP.setTactSize(intent.tactSize)
+                is Intent.Play -> metronomeREP.start()
+                is Intent.Stop -> metronomeREP.stop()
                 is Intent.SetName -> _state.update { it.copy(songName = intent.name) }
-
                 is Intent.SaveSong -> mScope.launch {
-                    coerceMetronome()
                     songRep.saveSong(getSongDataFromState())
                 }
 
                 is Intent.DeleteSong -> mScope.launch {
                     songRep.deleteSong(getSongDataFromState())
                 }
+
+                is Intent.IsShowEditBmp -> _state.update { it.copy(isShowEditBmp = intent.isShow) }
+                is Intent.IsShowEditTactSize -> _state.update { it.copy(isShowEditTactSize = intent.isShow) }
             }
         }
 
-        private fun coerceMetronome() {
-            _state.update {
-                it.copy(
-                    speed = (it.speed ?: 0).coerceIn(MIN_SPEED, MAX_SPEED),
-                    tactSize = (it.tactSize ?: 0).coerceIn(MIN_TACT_SIZE, MAX_TACT_SIZE)
-                )
-            }
-        }
 
+        /** текущий трек из БД по ИД */
         private val currentSongFromDB = _state.map { it.songId }.distinctUntilChanged()
             .flatMapLatest { mSongID ->
                 songRep.allSongs.map {
@@ -123,22 +118,18 @@ class MetronomeVM {
                 }
             }.stateIn(mScope, SharingStarted.Eagerly, null)
 
-        // listener current song from db
+        /** слушатель инфы о песни из БД */
         init {
             mScope.launch {
-                currentSongFromDB.collect { dbSong ->
-                    _state.update {
-                        it.copy(
-                            speed = dbSong?.speed ?: it.speed,
-                            tactSize = dbSong?.tactSize ?: it.tactSize,
-                            songName = dbSong?.name ?: it.songName
-                        )
-                    }
+                currentSongFromDB.mapNotNull { it }.collect { dbSong ->
+                    _state.update { it.copy(songName = dbSong.name) }
+                    metronomeREP.setBmp(dbSong.speed)
+                    metronomeREP.setTactSize(dbSong.tactSize)
                 }
             }
         }
 
-        // show save/delete listener
+        /** логика отображение элементов Сохранить / Удалить */
         init {
             mScope.launch {
                 _state.combine(currentSongFromDB) { state, dbSong ->
@@ -154,26 +145,28 @@ class MetronomeVM {
             }
         }
 
+        /** прослушивание стейта метронома */
+        init {
+            mScope.launch {
+                metronomeREP.state.collect { newState ->
+                    _state.update { it.copy(metronomeState = newState) }
+                }
+            }
+        }
+
         private fun getSongDataFromState() = _state.value.let {
             SongData(
                 id = it.songId,
                 name = it.songName,
-                speed = it.speed ?: 0,
-                tactSize = it.tactSize ?: 0
+                speed = it.metronomeState.bmp,
+                tactSize = it.metronomeState.tactSize
             )
         }
 
         override fun onCleared() {
-            metronomeLDS.stop()
+            metronomeREP.stop()
             super.onCleared()
         }
 
-        companion object {
-            private const val MIN_SPEED = 30
-            private const val MAX_SPEED = 245
-
-            private const val MIN_TACT_SIZE = 2
-            private const val MAX_TACT_SIZE = 8
-        }
     }
 }
