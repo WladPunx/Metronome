@@ -38,15 +38,6 @@ class MetronomeLDS {
         private val _state = MutableStateFlow(MetronomeStateData())
         override val state = _state.asStateFlow()
 
-        /** вызов методов, чтобы произвести корректировку данных и подсчитать задержку между битами */
-        init {
-            _state.value.let {
-                setTactSize(it.tactSize)
-                setBmp(it.bmp)
-            }
-        }
-
-
         /** запуск проигрывания метранома с отложенным временем {[MetronomeStateData.nextBeatTime]} */
         override fun start() {
             _state.update {
@@ -54,26 +45,20 @@ class MetronomeLDS {
                 it.copy(
                     isPlay = true,
                     nextBeatTime = Calendar.getInstance().time.time + 300,
-                    currentBeatCount = 1
+                    _currentBeatCount = MetronomeStateData.START_BEAT
                 )
             }
             setNextBeat()
         }
 
-        /** установка размера такта с корректировкой по мин/максу */
+        /** установка размера такта. корректируется внутри модели самостоятельно */
         override fun setTactSize(tactSize: Int) {
-            _state.update { it.copy(tactSize = tactSize.coerceIn(MetronomeStateData.MIN_TACT_SIZE, MetronomeStateData.MAX_TACT_SIZE)) }
+            _state.update { it.copy(_tactSize = tactSize) }
         }
 
-        /** устанвока скорости с подсчетом задержки до следующего бита */
+        /** устанвока скорости.корректируется внутри модели самостоятельно. подсчет задержки следующего бита внутри модели */
         override fun setBmp(bmp: Int) {
-            val newBmp = bmp.coerceIn(MetronomeStateData.MIN_SPEED, MetronomeStateData.MAX_SPEED)
-            _state.update {
-                it.copy(
-                    bmp = newBmp,
-                    beatDelay = (1000 * 60 / newBmp).toLong()
-                )
-            }
+            _state.update { it.copy(_bmp = bmp) }
         }
 
         /** остановка проигрывания */
@@ -87,7 +72,9 @@ class MetronomeLDS {
          *
          * таймер устанавливается на заренее подсчитанное время {[MetronomeStateData.nextBeatTime]}
          *
-         * после его воспроизведения, делаем перерасчет {[MetronomeStateData.currentBeatCount]} и {[MetronomeStateData.nextBeatTime]} и опять вызывает этот метод */
+         * после его воспроизведения, делаем перерасчет {[MetronomeStateData.currentBeatCount]} и {[MetronomeStateData.nextBeatTime]} и опять вызывает этот метод
+         *
+         * {[MetronomeStateData.currentBeatCount]} корректируется внутри модели */
         private fun setNextBeat() {
             Timer(true).schedule(
                 timerTask {
@@ -95,14 +82,12 @@ class MetronomeLDS {
                         if (state.isPlay.not()) return@timerTask
 
                         toneGenerator.startTone(
-                            if (state.currentBeatCount == 1) ToneGenerator.TONE_PROP_BEEP else ToneGenerator.TONE_CDMA_PIP,
+                            if (state.currentBeatCount == MetronomeStateData.START_BEAT) ToneGenerator.TONE_PROP_BEEP else ToneGenerator.TONE_CDMA_PIP,
                             150
                         )
 
                         state.copy(
-                            currentBeatCount = state.currentBeatCount.inc().let {
-                                if (it > state.tactSize) 1 else it
-                            },
+                            _currentBeatCount = state.currentBeatCount.inc(),
                             nextBeatTime = state.nextBeatTime + state.beatDelay
                         )
                     }
