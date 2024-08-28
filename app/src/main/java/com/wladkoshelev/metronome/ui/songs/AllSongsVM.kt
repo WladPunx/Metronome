@@ -40,19 +40,19 @@ class AllSongsVM {
         val state = _state.asStateFlow()
 
         sealed interface Event {
-            data class NavigateToMetronomeWithSong(val songId: String) : Event
+            data class NavigateToMetronome(val songId: String?) : Event
         }
 
         private val _event = SingleFlowEvent<Event>(mScope)
         val event = _event.flow
 
         sealed interface Intent {
-            data class SongClick(val song: SongData) : Intent
+            data class SongClick(val song: SongData?) : Intent
         }
 
         fun sendIntent(intent: Intent) {
             when (intent) {
-                is Intent.SongClick -> _event.emit(Event.NavigateToMetronomeWithSong(intent.song.id))
+                is Intent.SongClick -> _event.emit(Event.NavigateToMetronome(intent.song?.id))
             }
         }
 

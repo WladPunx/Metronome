@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name_release">Metronome</string>
     <string name="app_name_debug">DBG Metronome</string>
+
+
+    <string name="all_song_title">Все песни</string>
+    <string name="add_new_song">Новая песня</string>
+    <string name="bmp_value">BMP: %s</string>
+    <string name="tact_value">Ударов: %s</string>
+
 </resources>

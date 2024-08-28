@@ -4,34 +4,39 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Text
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
+import com.wladkoshelev.metronome.R
 import com.wladkoshelev.metronome.database.SongData
 import com.wladkoshelev.metronome.destinations.AllSongsFragmentDestination
+import com.wladkoshelev.metronome.theme.DividerColor
 import com.wladkoshelev.metronome.ui.metronome.getMetronomeFragment
 import com.wladkoshelev.metronome.ui.songs.AllSongsVM.VM.Event
 import com.wladkoshelev.metronome.ui.songs.AllSongsVM.VM.Intent
 import com.wladkoshelev.metronome.ui.songs.AllSongsVM.VM.State
+import com.wladkoshelev.metronome.ui.views.FragmentTitle
+import com.wladkoshelev.metronome.ui.views.MButton
+import com.wladkoshelev.metronome.ui.views.SongInfoView
+import com.wladkoshelev.metronome.ui.views.simpleVerticalScrollbar
 import com.wladkoshelev.metronome.utils.NavigationInstance
 import com.wladkoshelev.metronome.utils.NavigationInstance.Companion.myNavigate
 import kotlinx.coroutines.flow.Flow
@@ -57,7 +62,7 @@ fun AllSongsFragment(
     )
 
     LaunchedEffect(Unit) {
-        event.filterIsInstance<Event.NavigateToMetronomeWithSong>().collect {
+        event.filterIsInstance<Event.NavigateToMetronome>().collect {
             navController.myNavigate(getMetronomeFragment(it.songId))
         }
     }
@@ -73,47 +78,71 @@ private fun UI(
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        LazyColumn {
-            items(state.songsList) {
-                SongItem(
-                    modifier = Modifier
-                        .clickable { intent(Intent.SongClick(it)) },
-                    song = it
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(Color.Black)
-                )
-                Spacer(modifier = Modifier.height(5.dp))
-            }
-        }
+        TopBlock(
+            intent = intent
+        )
+        SongsBlock(
+            songList = state.songsList,
+            intent = intent
+        )
     }
 }
+
 
 @Composable
 @Preview
-private fun SongItem(
-    modifier: Modifier = Modifier,
-    song: SongData = SongData(
-        id = "id",
-        name = "name",
-        speed = 45,
-        tactSize = 23
-    )
+private fun TopBlock(
+    intent: (Intent) -> Unit = {}
 ) {
-    Box(
-        modifier = modifier
-            .width(IntrinsicSize.Max)
-            .height(IntrinsicSize.Max)
+    FragmentTitle(
+        title = stringResource(R.string.all_song_title)
+    )
+    MButton(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 15.dp),
+        text = stringResource(R.string.add_new_song),
+        onClick = { intent(Intent.SongClick(null)) }
+    )
+}
+
+
+@Composable
+@Preview
+private fun SongsBlock(
+    songList: List<SongData> = emptyList(),
+    intent: (Intent) -> Unit = {}
+) {
+    val stateListState = rememberLazyListState()
+    val dividerSize by remember { mutableStateOf((1.0 / 2.0).dp) }
+    val spacerSize by remember { mutableStateOf(10.dp) }
+    LazyColumn(
+        modifier = Modifier
+            .simpleVerticalScrollbar(stateListState),
+        state = stateListState
     ) {
-        Column {
-            Text(text = "id - ${song.id}")
-            Text(text = "name - ${song.name}")
-            Text(text = "speed - ${song.speed}")
-            Text(text = "tactSize - ${song.tactSize}")
+        items(songList) { item ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(dividerSize)
+                    .background(DividerColor)
+            )
+            Spacer(modifier = Modifier.height(spacerSize))
+            SongInfoView(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { intent(Intent.SongClick(item)) }
+                    .padding(start = 30.dp),
+                song = item
+            )
+            Spacer(modifier = Modifier.height(spacerSize))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(dividerSize)
+                    .background(DividerColor)
+            )
         }
     }
 }
-
