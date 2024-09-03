@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -124,11 +123,11 @@ private fun SongsBlock(
         items(songList) { item ->
             Box(
                 modifier = Modifier
+                    .padding(bottom = spacerSize)
                     .fillMaxWidth()
                     .height(dividerSize)
                     .background(DividerColor)
             )
-            Spacer(modifier = Modifier.height(spacerSize))
             SongInfoView(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -136,9 +135,9 @@ private fun SongsBlock(
                     .padding(start = 30.dp),
                 song = item
             )
-            Spacer(modifier = Modifier.height(spacerSize))
             Box(
                 modifier = Modifier
+                    .padding(top = spacerSize)
                     .fillMaxWidth()
                     .height(dividerSize)
                     .background(DividerColor)

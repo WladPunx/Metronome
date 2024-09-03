@@ -134,4 +134,9 @@ dependencies {
     // Gson
     implementation 'com.google.code.gson:gson:2.9.0'
 
+
+    // LazyColumn Reorder v.2.2.0 for kotlin 1.8. v.2.3.0 for kotlin 2.0
+//    implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
+    implementation("sh.calvin.reorderable:reorderable:2.2.0")
+
 }

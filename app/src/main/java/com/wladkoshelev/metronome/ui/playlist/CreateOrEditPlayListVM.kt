@@ -39,8 +39,13 @@ class CreateOrEditPlayListVM {
         private val mScope = viewModelScope.toSafeScope(MDispatchers.IO)
 
         data class State(
-            val songsWithCheck: List<Pair<SongData, Boolean>> = emptyList(),
+            /** выбранные песни в Плейлисте */
+            val selectSong: List<SongData> = emptyList(),
+            /** остальные песни */
+            val unSelectSong: List<SongData> = emptyList(),
+            /** название плейлиста */
             val name: String = "",
+            /** ИД плейлиста */
             val playListId: String
         )
 
@@ -59,18 +64,36 @@ class CreateOrEditPlayListVM {
         val event = _event.flow
 
         sealed interface Intent {
-            data class CheckUnCheckSong(val song: Pair<SongData, Boolean>) : Intent
+            /** клик на песню, по которому она добавляет или удаляется из плейлиста */
+            data class CheckUnCheckSong(val song: SongData) : Intent
+
+            /** ввод имени плейлиста */
             data class SetName(val name: String) : Intent
+
+            /** сохранение плейлиста */
             class SavePlayList() : Intent
+
+            /** передвижение элементов в списке */
+            data class OnMoveSelectSong(val from: Int, val to: Int) : Intent
         }
 
         fun sendIntent(intent: Intent) {
             when (intent) {
                 is Intent.CheckUnCheckSong -> _state.update {
-                    val newList = it.songsWithCheck.toMutableList()
-                    newList.remove(intent.song)
-                    newList.add(Pair(intent.song.first, intent.song.second.not()))
-                    it.copy(songsWithCheck = newList.sortedBy { !it.second })
+                    val mSelectSong = it.selectSong.toMutableList()
+                    val mUnselectSong = it.unSelectSong.toMutableList()
+
+                    if (mSelectSong.contains(intent.song)) {
+                        mSelectSong.remove(intent.song)
+                        mUnselectSong.add(intent.song)
+                    } else {
+                        mSelectSong.add(intent.song)
+                        mUnselectSong.remove(intent.song)
+                    }
+                    it.copy(
+                        selectSong = mSelectSong,
+                        unSelectSong = mUnselectSong
+                    )
                 }
 
                 is Intent.SetName -> _state.update { it.copy(name = intent.name) }
@@ -80,30 +103,44 @@ class CreateOrEditPlayListVM {
                             PlayListData(
                                 id = it.playListId,
                                 name = it.name,
-                                songsIdList = it.songsWithCheck.filter { it.second }.map { it.first }
+                                songsIdList = it.selectSong
                             )
                         }
                     )
                 }
+
+                is Intent.OnMoveSelectSong -> {
+                    _state.update {
+                        it.copy(
+                            selectSong = it.selectSong.toMutableList().apply {
+                                add(intent.to, removeAt(intent.from))
+                            }
+                        )
+                    }
+                }
             }
         }
 
-        // init all songs
+        /** инициализация начальных списков для Выбранных Песен и Остальных */
         init {
             mScope.launch {
                 val currentPlayListFromDB = songREP.allPlayLists.map {
                     it.find { it.id == _state.value.playListId }
                 }.firstOrNull()
 
-                val playListSong = (currentPlayListFromDB?.songsIdList ?: emptyList())
+                val playListSong = currentPlayListFromDB?.songsIdList.orEmpty()
+                val mUnSelectSongs = mutableListOf<SongData>()
 
-                val mAllSongs = (songREP.allSongs.firstOrNull() ?: emptyList()).map {
-                    Pair(it, playListSong.contains(it))
-                }.sortedBy { it.second.not() }
+                songREP.allSongs.firstOrNull().orEmpty().forEach {
+                    if (!playListSong.contains(it)) {
+                        mUnSelectSongs.add(it)
+                    }
+                }
 
                 _state.update {
                     it.copy(
-                        songsWithCheck = mAllSongs,
+                        selectSong = playListSong,
+                        unSelectSong = mUnSelectSongs,
                         name = currentPlayListFromDB?.name.orEmpty()
                     )
                 }
