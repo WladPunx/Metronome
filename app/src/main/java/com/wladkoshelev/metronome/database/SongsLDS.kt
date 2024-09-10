@@ -30,6 +30,7 @@ class SongsLDS {
         suspend fun deleteSong(song: SongData)
         suspend fun savePlayList(playList: PlayListData)
         val allPlayList: SharedFlow<List<PlayListData>>
+        suspend fun deletePlayList(playList: PlayListData)
     }
 
     class Impl(
@@ -68,7 +69,7 @@ class SongsLDS {
                 PlayListData(
                     name = it.name,
                     id = it.id,
-                    songsIdList = mutableListOf<SongData>().apply {
+                    songsList = mutableListOf<SongData>().apply {
                         it.songsIdList.forEach { songId ->
                             allSong.find { it.id == songId }?.let { add(it) }
                         }
@@ -83,9 +84,14 @@ class SongsLDS {
                 PlayListEntity(
                     id = playList.id,
                     name = playList.name,
-                    songsIdList = playList.songsIdList.map { it.id }
+                    songsIdList = playList.songsList.map { it.id }
                 )
             )
+        }
+
+        /** удаление плейлиста по ID */
+        override suspend fun deletePlayList(playList: PlayListData): Unit = withContext(MDispatchers.IO) {
+            songDao.deletePlayList(playList.id)
         }
 
         /** Data to Entity

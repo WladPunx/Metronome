@@ -7,6 +7,6 @@ data class PlayListData(
     val id: String,
     /** пользовательское имя */
     val name: String,
-    /** список ИДшников песен {[SongData.id]} */
-    val songsIdList: List<SongData>
+    /** список песен */
+    val songsList: List<SongData>
 )

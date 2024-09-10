@@ -1,5 +1,6 @@
 package com.wladkoshelev.metronome.theme
 
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.ui.graphics.Color
 
 val PrimaryColor = Color(0xFF6650a4)
@@ -15,7 +16,14 @@ val DividerColor = Color(0xFF9E9E9E)
 
 val MainTextColor = Color(0xFF414141)
 val SecondTextColor = Color(0xFF5F5F5F)
+val ErrorTextColor = Color(0xFFF54D4D)
 
+
+val MainTextSelectionColor = TextSelectionColors(
+    handleColor = MainTextColor.copy(alpha = 0.7f),
+    backgroundColor = MainTextColor.copy(alpha = 0.4f)
+)
 
 val DefaultButtonColor = Color(0xFF777777)
 val ButtonTextColor = Color(0xFFFFFFFF)
+

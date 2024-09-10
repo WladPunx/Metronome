@@ -24,7 +24,8 @@ class SongREP {
         suspend fun saveSong(song: SongData): SongSaveStatus
         suspend fun deleteSong(song: SongData)
         val allPlayLists: SharedFlow<List<PlayListData>>
-        suspend fun savePlayList(playList: PlayListData)
+        suspend fun savePlayList(playList: PlayListData): SongSaveStatus
+        suspend fun deletePlayList(playList: PlayListData)
     }
 
     class Impl(
@@ -60,8 +61,24 @@ class SongREP {
             songLds.deleteSong(song)
         }
 
-        override suspend fun savePlayList(playList: PlayListData): Unit = withContext(MDispatchers.IO) {
-            songLds.savePlayList(playList)
+        /** сохранине плейлиста с валидацией по {[SongSaveStatus]} */
+        override suspend fun savePlayList(playList: PlayListData): SongSaveStatus = withContext(MDispatchers.IO) {
+            val existNamesList = allPlayLists.firstOrNull().orEmpty()
+                .filterNot { it.id == playList.id }
+                .map { it.name.filterNot { it.isWhitespace() } }
+            val mName = playList.name.filterNot { it.isWhitespace() }
+            return@withContext when {
+                mName.isEmpty() -> SongSaveStatus.EMPTY_NAME
+                existNamesList.contains(mName) -> SongSaveStatus.NAME_EXIST
+                else -> {
+                    songLds.savePlayList(playList)
+                    SongSaveStatus.SUCCESS
+                }
+            }
+        }
+
+        override suspend fun deletePlayList(playList: PlayListData): Unit = withContext(MDispatchers.IO) {
+            songLds.deletePlayList(playList)
         }
 
     }

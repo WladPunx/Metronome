@@ -107,7 +107,7 @@ private fun PlayListUI(
     playList: PlayListData = PlayListData(
         id = "id",
         name = "name",
-        songsIdList = emptyList()
+        songsList = emptyList()
     )
 ) {
     Box(
@@ -118,7 +118,7 @@ private fun PlayListUI(
         Column {
             Text(text = "id - ${playList.id}")
             Text(text = "name - ${playList.name}")
-            playList.songsIdList.map { it.name }.forEach {
+            playList.songsList.map { it.name }.forEach {
                 Text(text = "song - ${it}")
             }
         }

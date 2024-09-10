@@ -1,7 +1,11 @@
 package com.wladkoshelev.metronome.ui.views
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,4 +30,23 @@ fun MCheckbox(
             checkmarkColor = Color.White
         )
     )
+}
+
+@Composable
+@Preview
+private fun Preview() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+    ) {
+        MCheckbox()
+        Text(text = "дэфолтная")
+
+        MCheckbox(isCheck = true)
+        Text(text = "включенная")
+
+        MCheckbox(isCheck = true, modifier = Modifier.fillMaxWidth())
+        Text(text = "на всю ширину")
+    }
 }

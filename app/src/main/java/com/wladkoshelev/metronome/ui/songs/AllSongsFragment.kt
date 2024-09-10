@@ -16,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,12 +28,14 @@ import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.wladkoshelev.metronome.R
 import com.wladkoshelev.metronome.database.SongData
 import com.wladkoshelev.metronome.destinations.AllSongsFragmentDestination
+import com.wladkoshelev.metronome.theme.ButtonForListWithBottomButtonPaddings
 import com.wladkoshelev.metronome.theme.DividerColor
+import com.wladkoshelev.metronome.theme.ListWithBottomButtonPaddings
 import com.wladkoshelev.metronome.ui.metronome.getMetronomeFragment
 import com.wladkoshelev.metronome.ui.songs.AllSongsVM.VM.Event
 import com.wladkoshelev.metronome.ui.songs.AllSongsVM.VM.Intent
 import com.wladkoshelev.metronome.ui.songs.AllSongsVM.VM.State
-import com.wladkoshelev.metronome.ui.views.FragmentTitle
+import com.wladkoshelev.metronome.ui.views.EditableFragmentTitle
 import com.wladkoshelev.metronome.ui.views.MButton
 import com.wladkoshelev.metronome.ui.views.SongInfoView
 import com.wladkoshelev.metronome.ui.views.simpleVerticalScrollbar
@@ -77,10 +80,11 @@ private fun UI(
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        TopBlock(
-            intent = intent
+        EditableFragmentTitle(
+            title = stringResource(R.string.all_song_title)
         )
         SongsBlock(
+            modifier = Modifier.weight(1f),
             songList = state.songsList,
             intent = intent
         )
@@ -90,58 +94,55 @@ private fun UI(
 
 @Composable
 @Preview
-private fun TopBlock(
-    intent: (Intent) -> Unit = {}
-) {
-    FragmentTitle(
-        title = stringResource(R.string.all_song_title)
-    )
-    MButton(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 15.dp),
-        text = stringResource(R.string.add_new_song),
-        onClick = { intent(Intent.SongClick(null)) }
-    )
-}
-
-
-@Composable
-@Preview
 private fun SongsBlock(
+    modifier: Modifier = Modifier,
     songList: List<SongData> = emptyList(),
     intent: (Intent) -> Unit = {}
 ) {
     val stateListState = rememberLazyListState()
     val dividerSize by remember { mutableStateOf((1.0 / 2.0).dp) }
     val spacerSize by remember { mutableStateOf(10.dp) }
-    LazyColumn(
-        modifier = Modifier
-            .simpleVerticalScrollbar(stateListState),
-        state = stateListState
+    Box(
+        modifier = modifier
     ) {
-        items(songList) { item ->
-            Box(
-                modifier = Modifier
-                    .padding(bottom = spacerSize)
-                    .fillMaxWidth()
-                    .height(dividerSize)
-                    .background(DividerColor)
-            )
-            SongInfoView(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { intent(Intent.SongClick(item)) }
-                    .padding(start = 30.dp),
-                song = item
-            )
-            Box(
-                modifier = Modifier
-                    .padding(top = spacerSize)
-                    .fillMaxWidth()
-                    .height(dividerSize)
-                    .background(DividerColor)
-            )
+        LazyColumn(
+            modifier = Modifier
+                .simpleVerticalScrollbar(stateListState),
+            state = stateListState,
+            contentPadding = ListWithBottomButtonPaddings
+        ) {
+            items(songList) { item ->
+                Box(
+                    modifier = Modifier
+                        .padding(bottom = spacerSize)
+                        .fillMaxWidth()
+                        .height(dividerSize)
+                        .background(DividerColor)
+                )
+                SongInfoView(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { intent(Intent.SongClick(item)) }
+                        .padding(start = 30.dp),
+                    song = item
+                )
+                Box(
+                    modifier = Modifier
+                        .padding(top = spacerSize)
+                        .fillMaxWidth()
+                        .height(dividerSize)
+                        .background(DividerColor)
+                )
+            }
         }
+        MButton(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(ButtonForListWithBottomButtonPaddings),
+            text = stringResource(R.string.add_new_song),
+            onClick = { intent(Intent.SongClick(null)) }
+        )
     }
+
 }

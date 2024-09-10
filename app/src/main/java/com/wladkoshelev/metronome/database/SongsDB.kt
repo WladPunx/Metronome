@@ -37,6 +37,9 @@ class SongsDB {
 
         @Insert(onConflict = OnConflictStrategy.REPLACE)
         fun savePlayList(playList: PlayListEntity)
+
+        @Query("delete from play_list_table where id==:playListID")
+        fun deletePlayList(playListID: String)
     }
 
     @Database(

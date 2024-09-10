@@ -8,4 +8,9 @@
     <string name="bmp_value">BMP: %s</string>
     <string name="tact_value">Ударов: %s</string>
 
+    <string name="play_list_name_hint">Имя плейлиста</string>
+
+    <string name="save_status_empty_name">пустое имя</string>
+    <string name="save_status_name_exist">имя существует</string>
+
 </resources>

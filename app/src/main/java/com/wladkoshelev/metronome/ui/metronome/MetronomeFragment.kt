@@ -31,7 +31,7 @@ import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.compose.koinViewModel
 
 
-fun getMetronomeFragment(songId: String? = null) = NavigationInstance(MetronomeFragmentDestination(songId))
+fun getMetronomeFragment(songId: String? = null) = NavigationInstance(MetronomeFragmentDestination(songsId = songId))
 
 @RootNavGraph
 @Destination
