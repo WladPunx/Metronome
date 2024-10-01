@@ -9,6 +9,7 @@ val TertiaryColor = Color(0xFF7D5260)
 
 
 val BackgroundColor = Color(0xFFD8D8D8)
+val ModalWindowBackgroundColor = Color(0xFFCDCDCD)
 val AppBarColor = Color(0xFFCACACA)
 val AppBarDividerColor = Color(0xFFBBBBBB)
 val DividerColor = Color(0xFF9E9E9E)

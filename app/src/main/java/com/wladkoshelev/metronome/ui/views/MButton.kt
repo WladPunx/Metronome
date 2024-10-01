@@ -21,7 +21,10 @@ import com.wladkoshelev.metronome.theme.ButtonTextColor
 import com.wladkoshelev.metronome.theme.DefaultButtonColor
 import com.wladkoshelev.metronome.theme.mainFont
 
-/** стилизованная кнопка для всего приложения */
+/** стилизованная кнопка для всего приложения
+ *
+ * !УСТАРЕЛО! ДОРАБОТАТЬ И ПЕРЕИСПОЛЬЗОВАТЬ {[MIconButton]}  */
+@Deprecated("")
 @Composable
 @Preview
 fun MButton(

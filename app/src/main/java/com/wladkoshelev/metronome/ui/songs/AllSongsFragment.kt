@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,9 +29,7 @@ import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.wladkoshelev.metronome.R
 import com.wladkoshelev.metronome.database.SongData
 import com.wladkoshelev.metronome.destinations.AllSongsFragmentDestination
-import com.wladkoshelev.metronome.theme.ButtonForListWithBottomButtonPaddings
 import com.wladkoshelev.metronome.theme.DividerColor
-import com.wladkoshelev.metronome.theme.ListWithBottomButtonPaddings
 import com.wladkoshelev.metronome.ui.metronome.getMetronomeFragment
 import com.wladkoshelev.metronome.ui.songs.AllSongsVM.VM.Event
 import com.wladkoshelev.metronome.ui.songs.AllSongsVM.VM.Intent
@@ -108,8 +107,7 @@ private fun SongsBlock(
         LazyColumn(
             modifier = Modifier
                 .simpleVerticalScrollbar(stateListState),
-            state = stateListState,
-            contentPadding = ListWithBottomButtonPaddings
+            state = stateListState
         ) {
             items(songList) { item ->
                 Box(
@@ -134,12 +132,13 @@ private fun SongsBlock(
                         .background(DividerColor)
                 )
             }
+            item { Spacer(modifier = Modifier.height(100.dp)) }
         }
         MButton(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(ButtonForListWithBottomButtonPaddings),
+                .padding(10.dp),
             text = stringResource(R.string.add_new_song),
             onClick = { intent(Intent.SongClick(null)) }
         )
