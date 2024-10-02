@@ -29,13 +29,15 @@ import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.wladkoshelev.metronome.R
 import com.wladkoshelev.metronome.database.SongData
 import com.wladkoshelev.metronome.destinations.AllSongsFragmentDestination
+import com.wladkoshelev.metronome.theme.BottomControlButtonSize
+import com.wladkoshelev.metronome.theme.BottomControlPadding
 import com.wladkoshelev.metronome.theme.DividerColor
 import com.wladkoshelev.metronome.ui.metronome.getMetronomeFragment
 import com.wladkoshelev.metronome.ui.songs.AllSongsVM.VM.Event
 import com.wladkoshelev.metronome.ui.songs.AllSongsVM.VM.Intent
 import com.wladkoshelev.metronome.ui.songs.AllSongsVM.VM.State
 import com.wladkoshelev.metronome.ui.views.EditableFragmentTitle
-import com.wladkoshelev.metronome.ui.views.MButton
+import com.wladkoshelev.metronome.ui.views.MIconButton
 import com.wladkoshelev.metronome.ui.views.SongInfoView
 import com.wladkoshelev.metronome.ui.views.simpleVerticalScrollbar
 import com.wladkoshelev.metronome.utils.NavigationInstance
@@ -134,13 +136,14 @@ private fun SongsBlock(
             }
             item { Spacer(modifier = Modifier.height(100.dp)) }
         }
-        MButton(
+        MIconButton(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(10.dp),
-            text = stringResource(R.string.add_new_song),
-            onClick = { intent(Intent.SongClick(null)) }
+                .padding(BottomControlPadding),
+            iconRes = R.drawable.ic_add,
+            onClick = { intent(Intent.SongClick(null)) },
+            text = null,
+            iconSize = BottomControlButtonSize
         )
     }
 

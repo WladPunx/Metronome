@@ -193,6 +193,7 @@ private fun ControlBlock(
             Spacer(modifier = Modifier.weight(1f))
             MIconButton(
                 iconRes = R.drawable.ic_save,
+                text = null,
                 isEnable = isCanSave,
                 iconSize = iconSize,
                 onClick = { intent(Intent.SavePlayList()) }
@@ -200,12 +201,14 @@ private fun ControlBlock(
             Spacer(modifier = Modifier.weight(1f))
             MIconButton(
                 iconRes = R.drawable.ic_add,
+                text = null,
                 iconSize = iconSize,
                 onClick = { intent(Intent.SetIsShowAllSong(true)) }
             )
             Spacer(modifier = Modifier.weight(1f))
             MIconButton(
                 iconRes = R.drawable.ic_delete,
+                text = null,
                 iconSize = iconSize,
                 isEnable = isCanDelete,
                 onClick = { intent(Intent.IsShowDeleteAlert(true)) }
