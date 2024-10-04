@@ -12,7 +12,10 @@
     <string name="save_status_empty_name">пустое имя</string>
     <string name="save_status_name_exist">имя существует</string>
 
+    <string name="playlist_fragment_title">Плейлисты</string>
+
     <string name="no_song">Нет песен</string>
+    <string name="no_playlist">Нет плейлистов</string>
 
     <string name="playlist_add_song_description">Выберите песни</string>
     <string name="playlist_no_song_in_playlist">Добавьте песни в плейлист</string>
@@ -23,7 +26,7 @@
 
 
     <string name="exit_without_save_title">Выйти без сохранени?</string>
-    <string name="exit_without_save_message"></string>
+    <string name="exit_without_save_message">""</string>
     <string name="exit_without_save_exit_without_save">Выйти</string>
     <string name="exit_without_save_save_and_exit">Сохранить и выйти</string>
 

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,6 +50,7 @@ import com.wladkoshelev.metronome.theme.DefaultButtonColor
 import com.wladkoshelev.metronome.theme.DividerColor
 import com.wladkoshelev.metronome.theme.EmptyListTextStyle
 import com.wladkoshelev.metronome.theme.MainTextStyle
+import com.wladkoshelev.metronome.theme.SecondTextStyle
 import com.wladkoshelev.metronome.ui.playlist.CreateOrEditPlayListVM.VM.Event
 import com.wladkoshelev.metronome.ui.playlist.CreateOrEditPlayListVM.VM.Intent
 import com.wladkoshelev.metronome.ui.playlist.CreateOrEditPlayListVM.VM.State
@@ -253,7 +255,10 @@ private fun MoveSongsBlock(
                 .simpleVerticalScrollbar(lazyListState),
             state = lazyListState
         ) {
-            items(selectSongs, { it.toString() }) { item ->
+            itemsIndexed(
+                items = selectSongs,
+                key = { index, item -> item.toString() })
+            { index, item ->
                 ReorderableItem(state, key = item.toString()) { isDragging ->
                     val backgroundAnimate by animateColorAsState(
                         targetValue = if (isDragging) DefaultButtonColor.copy(alpha = 0.5f) else Color.Transparent, label = "",
@@ -273,10 +278,16 @@ private fun MoveSongsBlock(
                                 .background(DividerColor)
                         )
                         Row(
-                            modifier = Modifier.padding(horizontal = 20.dp),
+                            modifier = Modifier.padding(horizontal = 10.dp),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Text(
+                                modifier = Modifier.align(Alignment.Top),
+                                text = "${index + 1}. ",
+                                style = SecondTextStyle,
+                                fontSize = MainTextStyle.fontSize
+                            )
                             SongInfoView(
                                 modifier = Modifier.weight(1f),
                                 song = item

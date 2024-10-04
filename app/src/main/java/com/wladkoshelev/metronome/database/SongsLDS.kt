@@ -63,28 +63,36 @@ class SongsLDS {
 
         /** список всех плейлистов на основе данных из БД и {[allSongs]}
          *
-        в БД для плейлиста сохраняется лишь ID'шник песни {[SongData.id]} {[PlayListEntity.songsIdList]} */
+         * в БД для плейлиста сохраняется лишь ID'шник песни {[SongData.id]} {[PlayListEntity.songsIdList]}
+         *
+         * сортируется по времени создания {[PlayListEntity.createTime]} */
         override val allPlayList = songDao.getAllPlayList().combine(allSongs) { listPlaylist, allSong ->
-            listPlaylist.map {
-                PlayListData(
-                    name = it.name,
-                    id = it.id,
-                    songsList = mutableListOf<SongData>().apply {
-                        it.songsIdList.forEach { songId ->
-                            allSong.find { it.id == songId }?.let { add(it) }
+            listPlaylist
+                .sortedByDescending { it.createTime }
+                .map {
+                    PlayListData(
+                        name = it.name,
+                        id = it.id,
+                        songsList = mutableListOf<SongData>().apply {
+                            it.songsIdList.forEach { songId ->
+                                allSong.find { it.id == songId }?.let { add(it) }
+                            }
                         }
-                    }
-                )
-            }
+                    )
+                }
         }.shareWhileSubscribed(mScope)
 
-        /** сохранение плейлиста */
+        /** сохранение плейлиста c учетом времени {[PlayListEntity.createTime]} */
         override suspend fun savePlayList(playList: PlayListData): Unit = withContext(MDispatchers.IO) {
+            val createTime = songDao.getAllPlayList().firstOrNull().orEmpty().find {
+                it.id == playList.id
+            }?.createTime ?: Calendar.getInstance().time.time
             songDao.savePlayList(
                 PlayListEntity(
                     id = playList.id,
                     name = playList.name,
-                    songsIdList = playList.songsList.map { it.id }
+                    songsIdList = playList.songsList.map { it.id },
+                    createTime = createTime
                 )
             )
         }
