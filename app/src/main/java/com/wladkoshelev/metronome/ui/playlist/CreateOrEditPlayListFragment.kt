@@ -49,8 +49,10 @@ import com.wladkoshelev.metronome.theme.BottomControlPadding
 import com.wladkoshelev.metronome.theme.DefaultButtonColor
 import com.wladkoshelev.metronome.theme.DividerColor
 import com.wladkoshelev.metronome.theme.EmptyListTextStyle
+import com.wladkoshelev.metronome.theme.ListElementDividerPadding
+import com.wladkoshelev.metronome.theme.ListElementDividerSize
+import com.wladkoshelev.metronome.theme.ListElementHorizontalPadding
 import com.wladkoshelev.metronome.theme.MainTextStyle
-import com.wladkoshelev.metronome.theme.SecondTextStyle
 import com.wladkoshelev.metronome.ui.playlist.CreateOrEditPlayListVM.VM.Event
 import com.wladkoshelev.metronome.ui.playlist.CreateOrEditPlayListVM.VM.Intent
 import com.wladkoshelev.metronome.ui.playlist.CreateOrEditPlayListVM.VM.State
@@ -62,7 +64,7 @@ import com.wladkoshelev.metronome.ui.views.MCheckbox
 import com.wladkoshelev.metronome.ui.views.MIconButton
 import com.wladkoshelev.metronome.ui.views.SongInfoView
 import com.wladkoshelev.metronome.ui.views.simpleVerticalScrollbar
-import com.wladkoshelev.metronome.utils.NavigationInstance
+import com.wladkoshelev.metronome.utils.navigation.NavigationInstance
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
 import org.koin.androidx.compose.koinViewModel
@@ -255,10 +257,7 @@ private fun MoveSongsBlock(
                 .simpleVerticalScrollbar(lazyListState),
             state = lazyListState
         ) {
-            itemsIndexed(
-                items = selectSongs,
-                key = { index, item -> item.toString() })
-            { index, item ->
+            itemsIndexed(items = selectSongs, key = { index, item -> item.toString() }) { index, item ->
                 ReorderableItem(state, key = item.toString()) { isDragging ->
                     val backgroundAnimate by animateColorAsState(
                         targetValue = if (isDragging) DefaultButtonColor.copy(alpha = 0.5f) else Color.Transparent, label = "",
@@ -272,25 +271,20 @@ private fun MoveSongsBlock(
                     ) {
                         Box(
                             modifier = Modifier
-                                .padding(bottom = spacerSize)
+                                .padding(bottom = ListElementDividerPadding)
                                 .fillMaxWidth()
-                                .height(dividerSize)
+                                .height(ListElementDividerSize)
                                 .background(DividerColor)
                         )
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp),
+                            modifier = Modifier.padding(ListElementHorizontalPadding),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                modifier = Modifier.align(Alignment.Top),
-                                text = "${index + 1}. ",
-                                style = SecondTextStyle,
-                                fontSize = MainTextStyle.fontSize
-                            )
                             SongInfoView(
                                 modifier = Modifier.weight(1f),
-                                song = item
+                                song = item,
+                                number = "${index + 1}"
                             )
                             Image(
                                 painter = painterResource(R.drawable.ic_burger),
@@ -300,9 +294,9 @@ private fun MoveSongsBlock(
                         }
                         Box(
                             modifier = Modifier
-                                .padding(top = spacerSize)
+                                .padding(top = ListElementDividerPadding)
                                 .fillMaxWidth()
-                                .height(dividerSize)
+                                .height(ListElementDividerSize)
                                 .background(DividerColor)
                         )
                     }
@@ -316,6 +310,7 @@ private fun MoveSongsBlock(
 }
 
 
+/** блок для Добавления/Удаления песен из плейлиста */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 @Preview
@@ -369,9 +364,9 @@ private fun AddSongsBlock(
                 ) {
                     Box(
                         modifier = Modifier
-                            .padding(bottom = spacerSize)
+                            .padding(bottom = ListElementDividerPadding)
                             .fillMaxWidth()
-                            .height(dividerSize)
+                            .height(ListElementDividerSize)
                             .background(DividerColor)
                     )
                     Row(
@@ -389,9 +384,9 @@ private fun AddSongsBlock(
                     }
                     Box(
                         modifier = Modifier
-                            .padding(top = spacerSize)
+                            .padding(top = ListElementDividerPadding)
                             .fillMaxWidth()
-                            .height(dividerSize)
+                            .height(ListElementDividerSize)
                             .background(DividerColor)
                     )
                 }
@@ -403,7 +398,4 @@ private fun AddSongsBlock(
 
 }
 
-
-private val dividerSize = 0.5.dp
-private val spacerSize = 10.dp
 

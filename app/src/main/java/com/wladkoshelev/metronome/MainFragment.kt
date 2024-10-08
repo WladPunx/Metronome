@@ -14,9 +14,9 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.wladkoshelev.metronome.ui.metronome.getMetronomeFragment
 import com.wladkoshelev.metronome.ui.playlist.getPlayListsFragment
-import com.wladkoshelev.metronome.ui.songs.getAllSongsFragment
-import com.wladkoshelev.metronome.utils.NavigationInstance
-import com.wladkoshelev.metronome.utils.NavigationInstance.Companion.myNavigate
+import com.wladkoshelev.metronome.ui.songs.getSongsFragment
+import com.wladkoshelev.metronome.utils.navigation.NavigationInstance
+import com.wladkoshelev.metronome.utils.navigation.NavigationInstance.Companion.myNavigate
 
 
 @RootNavGraph(start = true)
@@ -28,7 +28,7 @@ fun MainFragment(navController: NavController) {
         Button(onClick = { navigateTo(getMetronomeFragment()) }) {
             Text(text = "метраном")
         }
-        Button(onClick = { navigateTo(getAllSongsFragment()) }) {
+        Button(onClick = { navigateTo(getSongsFragment()) }) {
             Text(text = "все песни")
         }
         Button(onClick = { navigateTo(getPlayListsFragment()) }) {

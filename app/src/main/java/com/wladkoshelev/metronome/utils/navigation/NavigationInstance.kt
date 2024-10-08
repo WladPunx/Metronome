@@ -1,4 +1,4 @@
-package com.wladkoshelev.metronome.utils
+package com.wladkoshelev.metronome.utils.navigation
 
 import androidx.navigation.NavController
 import com.ramcosta.composedestinations.navigation.navigate

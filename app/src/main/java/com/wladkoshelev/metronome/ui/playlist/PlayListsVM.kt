@@ -41,7 +41,7 @@ class PlayListsVM {
 
         sealed interface Event {
             class CreateNewPlatList : Event
-            class EditPlayList(val playListID : String) : Event
+            class OpenPlayList(val playListID : String) : Event
         }
 
         private val _event = SingleFlowEvent<Event>(mScope)
@@ -49,13 +49,13 @@ class PlayListsVM {
 
         sealed interface Intent {
             class CreateNewPlayList() : Intent
-            class EditPlayList(val playListID: String) : Intent
+            class OpenPlayList(val playListID: String) : Intent
         }
 
         fun sendIntent(intent: Intent) {
             when (intent) {
                 is Intent.CreateNewPlayList -> _event.emit(Event.CreateNewPlatList())
-                is Intent.EditPlayList -> _event.emit(Event.EditPlayList(intent.playListID))
+                is Intent.OpenPlayList -> _event.emit(Event.OpenPlayList(intent.playListID))
             }
         }
 

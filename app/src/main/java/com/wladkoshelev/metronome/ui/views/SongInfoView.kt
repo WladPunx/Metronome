@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,23 +23,31 @@ import com.wladkoshelev.metronome.theme.SecondTextStyle
 
 /** небольшая вьюшка с информацией по Песне {[SongData]}, для сохранения единого стиля
  *
- * используется для отображения Всех Песен и для Создания / Редактирвоания Плейлистов */
+ * используется для отображения Всех Песен и для Создания / Редактирвоания Плейлистов
+ *
+ * {[number]} - порядковый номер песни. используется на экранах с Плейлистом */
 @Composable
 @Preview
 fun SongInfoView(
     modifier: Modifier = Modifier,
-    song: SongData = SongData.mock()
+    song: SongData = SongData.mock(),
+    number: String? = null
 ) {
     Box(
         modifier = modifier
             .width(IntrinsicSize.Max)
             .height(IntrinsicSize.Max)
     ) {
-        Column {
-            Text(text = song.name, style = MainTextStyle)
-            Spacer(modifier = Modifier.height(3.dp))
-            Text(text = stringResource(R.string.bmp_value, song.speed), style = SecondTextStyle)
-            Text(text = stringResource(R.string.tact_value, song.tactSize), style = SecondTextStyle)
+        Row {
+            number?.let {
+                Text(text = it + ". ", style = MainTextStyle, color = SecondTextStyle.color)
+            }
+            Column {
+                Text(text = song.name, style = MainTextStyle)
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(text = stringResource(R.string.bmp_value, song.speed), style = SecondTextStyle)
+                Text(text = stringResource(R.string.tact_value, song.tactSize), style = SecondTextStyle)
+            }
         }
     }
 }
@@ -57,5 +66,8 @@ private fun Preview() {
 
         SongInfoView(modifier = Modifier.fillMaxWidth())
         Text(text = "на всю ширину")
+
+        SongInfoView(number = "23")
+        Text(text = "добавлен number")
     }
 }

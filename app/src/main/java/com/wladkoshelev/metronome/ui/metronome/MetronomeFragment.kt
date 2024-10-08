@@ -26,7 +26,7 @@ import com.wladkoshelev.metronome.destinations.MetronomeFragmentDestination
 import com.wladkoshelev.metronome.ui.metronome.MetronomeVM.VM.Event
 import com.wladkoshelev.metronome.ui.metronome.MetronomeVM.VM.Intent
 import com.wladkoshelev.metronome.ui.metronome.MetronomeVM.VM.State
-import com.wladkoshelev.metronome.utils.NavigationInstance
+import com.wladkoshelev.metronome.utils.navigation.NavigationInstance
 import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.compose.koinViewModel
 

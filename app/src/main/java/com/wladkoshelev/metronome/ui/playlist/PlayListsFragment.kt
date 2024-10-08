@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,11 +41,12 @@ import com.wladkoshelev.metronome.theme.SecondTextStyle
 import com.wladkoshelev.metronome.ui.playlist.PlayListsVM.VM.Event
 import com.wladkoshelev.metronome.ui.playlist.PlayListsVM.VM.Intent
 import com.wladkoshelev.metronome.ui.playlist.PlayListsVM.VM.State
+import com.wladkoshelev.metronome.ui.songs.getSongsFragment
 import com.wladkoshelev.metronome.ui.views.EditableFragmentTitle
 import com.wladkoshelev.metronome.ui.views.MIconButton
 import com.wladkoshelev.metronome.ui.views.simpleVerticalScrollbar
-import com.wladkoshelev.metronome.utils.NavigationInstance
-import com.wladkoshelev.metronome.utils.NavigationInstance.Companion.myNavigate
+import com.wladkoshelev.metronome.utils.navigation.NavigationInstance
+import com.wladkoshelev.metronome.utils.navigation.NavigationInstance.Companion.myNavigate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
 import org.koin.androidx.compose.koinViewModel
@@ -75,8 +75,8 @@ fun PlayListsFragment(
     }
 
     LaunchedEffect(Unit) {
-        event.filterIsInstance<Event.EditPlayList>().collect {
-            navController.myNavigate(getCreateOrEditPlayListFragment(it.playListID))
+        event.filterIsInstance<Event.OpenPlayList>().collect {
+            navController.myNavigate(getSongsFragment(it.playListID))
         }
     }
 }
@@ -102,10 +102,7 @@ private fun UI(
                     .fillMaxSize()
                     .simpleVerticalScrollbar(listState)
             ) {
-                itemsIndexed(
-                    items = state.allPlayLists,
-                    key = { index, item -> item.toString() }
-                ) { index, item ->
+                itemsIndexed(items = state.allPlayLists, key = { index, item -> item.toString() }) { index, item ->
                     Divider(
                         modifier = Modifier
                             .padding(bottom = 10.dp)
@@ -115,7 +112,7 @@ private fun UI(
                             .padding(horizontal = 16.dp)
                             .fillMaxWidth()
                             .clickable {
-                                intent(Intent.EditPlayList(item.id))
+                                intent(Intent.OpenPlayList(item.id))
                             },
                         playList = item
                     )
@@ -144,7 +141,6 @@ private fun UI(
 }
 
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 @Preview
 private fun PlayListUI(

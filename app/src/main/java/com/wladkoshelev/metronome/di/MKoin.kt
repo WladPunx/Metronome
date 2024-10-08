@@ -13,7 +13,7 @@ import com.wladkoshelev.metronome.metronome.MetronomeREP
 import com.wladkoshelev.metronome.ui.metronome.MetronomeVM
 import com.wladkoshelev.metronome.ui.playlist.CreateOrEditPlayListVM
 import com.wladkoshelev.metronome.ui.playlist.PlayListsVM
-import com.wladkoshelev.metronome.ui.songs.AllSongsVM
+import com.wladkoshelev.metronome.ui.songs.SongsVM
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.androidx.compose.koinViewModel
@@ -38,7 +38,7 @@ object MKoin {
                 SongREP().mModule(),
 
 
-                AllSongsVM().mModule(),
+                SongsVM().mModule(),
 
 
                 PlayListsVM().mModule(),
