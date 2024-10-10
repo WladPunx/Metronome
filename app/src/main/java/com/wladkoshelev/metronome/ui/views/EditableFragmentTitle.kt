@@ -13,14 +13,18 @@ import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wladkoshelev.metronome.R
+import com.wladkoshelev.metronome.database.SongSaveStatus
 import com.wladkoshelev.metronome.theme.AppBarColor
 import com.wladkoshelev.metronome.theme.AppBarDividerColor
 import com.wladkoshelev.metronome.theme.ErrorTextColor
@@ -123,5 +127,19 @@ private fun Preview() {
             errorText = "error"
         )
         Text(text = "ошибка")
+    }
+}
+
+
+/** UI функция для парсинга {[SongSaveStatus]} в текст для {[EditableFragmentTitle]} */
+@Composable
+fun SongSaveStatus.parseToTextToEditableFragment(): String? {
+    val context = LocalContext.current
+    return remember(this) {
+        when (this) {
+            SongSaveStatus.SUCCESS -> null
+            SongSaveStatus.EMPTY_NAME -> context.getString(R.string.save_status_empty_name)
+            SongSaveStatus.NAME_EXIST -> context.getString(R.string.save_status_name_exist)
+        }
     }
 }

@@ -42,7 +42,6 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.wladkoshelev.metronome.R
 import com.wladkoshelev.metronome.database.SongData
-import com.wladkoshelev.metronome.database.SongSaveStatus
 import com.wladkoshelev.metronome.destinations.CreateOrEditPlayListFragmentDestination
 import com.wladkoshelev.metronome.theme.BottomControlButtonSize
 import com.wladkoshelev.metronome.theme.BottomControlPadding
@@ -63,6 +62,7 @@ import com.wladkoshelev.metronome.ui.views.MBottomSheet
 import com.wladkoshelev.metronome.ui.views.MCheckbox
 import com.wladkoshelev.metronome.ui.views.MIconButton
 import com.wladkoshelev.metronome.ui.views.SongInfoView
+import com.wladkoshelev.metronome.ui.views.parseToTextToEditableFragment
 import com.wladkoshelev.metronome.ui.views.simpleVerticalScrollbar
 import com.wladkoshelev.metronome.utils.navigation.NavigationInstance
 import kotlinx.coroutines.flow.Flow
@@ -147,11 +147,7 @@ private fun UI(
             title = state.name,
             onTextChange = { intent(Intent.SetName(it)) },
             hint = stringResource(R.string.play_list_name_hint),
-            errorText = when (state.saveStatus) {
-                SongSaveStatus.SUCCESS -> null
-                SongSaveStatus.EMPTY_NAME -> stringResource(R.string.save_status_empty_name)
-                SongSaveStatus.NAME_EXIST -> stringResource(R.string.save_status_name_exist)
-            }
+            errorText = state.saveStatus.parseToTextToEditableFragment()
         )
         Box(
             modifier = Modifier

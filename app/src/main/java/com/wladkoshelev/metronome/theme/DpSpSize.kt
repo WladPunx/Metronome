@@ -19,3 +19,10 @@ val BottomControlButtonSize = 30.dp
 val ListElementHorizontalPadding = PaddingValues(horizontal = 15.dp)
 val ListElementDividerSize = 0.5.dp
 val ListElementDividerPadding = 10.dp
+
+
+/** шейп бэкграунда для Алертов */
+val AlertDialogShape = ButtonShape
+
+/** внутренние отступы от краев для Алерта */
+val AlertDialogInnerPadding = PaddingValues(20.dp)

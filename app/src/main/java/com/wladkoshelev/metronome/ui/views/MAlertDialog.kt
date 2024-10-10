@@ -22,6 +22,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.wladkoshelev.metronome.theme.AlertDialogInnerPadding
+import com.wladkoshelev.metronome.theme.AlertDialogShape
 import com.wladkoshelev.metronome.theme.AlertDialogTextStyle
 import com.wladkoshelev.metronome.theme.AlertDialogTitleStyle
 import com.wladkoshelev.metronome.theme.ButtonShape
@@ -37,7 +39,6 @@ import com.wladkoshelev.metronome.theme.ModalWindowBackgroundColor
  * @param title шапка алерта
  * @param text месседж алерта
  * @param [buttons] список кнопок. */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 @Preview
 fun MAlertDialog(
@@ -51,9 +52,9 @@ fun MAlertDialog(
         Dialog(onDismissRequest = { onDismiss() }) {
             Column(
                 modifier = Modifier
-                    .clip(ButtonShape)
+                    .clip(AlertDialogShape)
                     .background(ModalWindowBackgroundColor)
-                    .padding(20.dp)
+                    .padding(AlertDialogInnerPadding)
             ) {
                 title?.ifEmpty { null }?.let {
                     Text(text = it, style = AlertDialogTitleStyle)
@@ -64,36 +65,7 @@ fun MAlertDialog(
                     Spacer(modifier = Modifier.height(10.dp))
                 }
                 Spacer(modifier = Modifier.height(15.dp))
-                var textSizePercent by remember { mutableStateOf(1f) }
-                FlowRow {
-                    buttons.forEach {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(35.dp)
-                                .padding(end = 5.dp, bottom = 5.dp)
-                                .clip(ButtonShape)
-                                .border(1.dp, AlertDialogTitleStyle.color, ButtonShape)
-                                .clickable {
-                                    it.onClick()
-                                }
-                                .padding(5.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = it.text,
-                                style = AlertDialogTitleStyle,
-                                fontSize = AlertDialogTitleStyle.fontSize * textSizePercent,
-                                maxLines = 1,
-                                onTextLayout = {
-                                    if (it.hasVisualOverflow) {
-                                        textSizePercent = (textSizePercent - 0.1f).coerceAtLeast(0.1f)
-                                    }
-                                }
-                            )
-                        }
-                    }
-                }
+                MAlertButtonsView(buttons = buttons)
             }
         }
     }
@@ -107,3 +79,44 @@ data class MAlertButton(
     val text: String,
     val onClick: () -> Unit
 )
+
+
+/** вью кнопок для {[MAlertDialog]} и для переиспользования в других АлертДиалогах, для сохранения единого стиля */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+@Preview
+fun MAlertButtonsView(
+    modifier: Modifier = Modifier,
+    buttons: List<MAlertButton> = emptyList()
+) {
+    var textSizePercent by remember { mutableStateOf(1f) }
+    FlowRow {
+        buttons.forEach {
+            Box(
+                modifier = modifier
+                    .weight(1f)
+                    .height(35.dp)
+                    .padding(end = 5.dp, bottom = 5.dp)
+                    .clip(ButtonShape)
+                    .border(1.dp, AlertDialogTitleStyle.color, ButtonShape)
+                    .clickable {
+                        it.onClick()
+                    }
+                    .padding(5.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = it.text,
+                    style = AlertDialogTitleStyle,
+                    fontSize = AlertDialogTitleStyle.fontSize * textSizePercent,
+                    maxLines = 1,
+                    onTextLayout = {
+                        if (it.hasVisualOverflow) {
+                            textSizePercent = (textSizePercent - 0.1f).coerceAtLeast(0.1f)
+                        }
+                    }
+                )
+            }
+        }
+    }
+}

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wladkoshelev.metronome.database.SongData
 import com.wladkoshelev.metronome.database.SongREP
+import com.wladkoshelev.metronome.database.SongSaveStatus
 import com.wladkoshelev.metronome.metronome.MetronomeREP
 import com.wladkoshelev.metronome.metronome.MetronomeStateData
 import com.wladkoshelev.metronome.utils.MDispatchers
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
@@ -54,13 +56,19 @@ class MetronomeVM {
             /** имя песни, с которой она будет сохранена в БД */
             val songName: String = "",
             /** можно ли сохранить песню в БД или она ничем не отличается */
-            val isShowSave: Boolean = false,
+            val isCanSave: Boolean = false,
             /** можно ли удалить песню? удалить песню, можно если она сохранена в БД */
-            val isShowDelete: Boolean = false,
+            val isCanDelete: Boolean = false,
             /** статус АлертДиалога для редактирования Bmp */
             val isShowEditBmp: Boolean = false,
             /** статус АлертДиалога для редактирования размера такта */
-            val isShowEditTactSize: Boolean = false
+            val isShowEditTactSize: Boolean = false,
+            /** статус сохранения песни для отображения ошибок. если ==Success, то ошибка не показывается */
+            val saveStatus: SongSaveStatus = SongSaveStatus.SUCCESS,
+            /** показывать Алерт для выхода без сохранения? */
+            val isShowExitWithoutSaveAlert: Boolean = false,
+            /** показывать Алерт удаления песни? */
+            val isShowDeleteAlert: Boolean = false
         )
 
         private val _state = MutableStateFlow(
@@ -71,22 +79,52 @@ class MetronomeVM {
         val state = _state.asStateFlow()
 
         sealed interface Event {
-
+            /** событие выхода с экрана */
+            class OnBack() : Event
         }
 
         private val _event = SingleFlowEvent<Event>(mScope)
         val event = _event.flow
 
         sealed interface Intent {
+            /** установка скорости песни */
             data class SetSpeed(val speed: Int) : Intent
+
+            /** установка размера такта */
             data class SetSTactSize(val tactSize: Int) : Intent
+
+            /** проигрывать метраном */
             class Play : Intent
+
+            /** останвоить проигрывание */
             class Stop : Intent
+
+            /** ввод имени песни */
             data class SetName(val name: String) : Intent
+
+            /** клик на сохранение песни */
             class SaveSong : Intent
+
+            /** удаление песни из БД */
             class DeleteSong : Intent
+
+            /** показывать Алерт для ручного ввода скорости? */
             data class IsShowEditBmp(val isShow: Boolean) : Intent
+
+            /** показывать Алерт для ручного ввода размера такта? */
             data class IsShowEditTactSize(val isShow: Boolean) : Intent
+
+            /** клик Назад */
+            class OnBackClick() : Intent
+
+            /** показывать алерт удаления песни? */
+            data class IsShowDeleteAlert(val isShow: Boolean) : Intent
+
+            /** сохранить и выйти с фрагмента */
+            class SaveAndExit() : Intent
+
+            /** выйти без сохранения */
+            class ExitWithoutSave() : Intent
         }
 
         fun sendIntent(intent: Intent) {
@@ -96,16 +134,30 @@ class MetronomeVM {
                 is Intent.Play -> metronomeREP.start()
                 is Intent.Stop -> metronomeREP.stop()
                 is Intent.SetName -> _state.update { it.copy(songName = intent.name) }
-                is Intent.SaveSong -> mScope.launch {
-                    songRep.saveSong(getSongDataFromState())
-                }
-
+                is Intent.SaveSong -> mScope.launch { saveSong() }
                 is Intent.DeleteSong -> mScope.launch {
                     songRep.deleteSong(getSongDataFromState())
+                    _event.emit(Event.OnBack())
                 }
 
                 is Intent.IsShowEditBmp -> _state.update { it.copy(isShowEditBmp = intent.isShow) }
                 is Intent.IsShowEditTactSize -> _state.update { it.copy(isShowEditTactSize = intent.isShow) }
+                is Intent.OnBackClick -> _state.update {
+                    val isShowExitAlert = it.isCanSave && (it.songName.isNotEmpty() || it.isCanDelete)
+                    if (isShowExitAlert.not()) _event.emit(Event.OnBack())
+                    it.copy(isShowExitWithoutSaveAlert = isShowExitAlert)
+                }
+
+                is Intent.SaveAndExit -> mScope.launch {
+                    saveSong()
+                    _state.update { it.copy(isShowExitWithoutSaveAlert = false) }
+                    if (_state.value.saveStatus == SongSaveStatus.SUCCESS) {
+                        _event.emit(Event.OnBack())
+                    }
+                }
+
+                is Intent.ExitWithoutSave -> _event.emit(Event.OnBack())
+                is Intent.IsShowDeleteAlert -> _state.update { it.copy(isShowDeleteAlert = intent.isShow) }
             }
         }
 
@@ -137,8 +189,8 @@ class MetronomeVM {
                 }.collect { result ->
                     _state.update {
                         it.copy(
-                            isShowSave = result.first != result.second,
-                            isShowDelete = result.second != null
+                            isCanSave = result.first != result.second,
+                            isCanDelete = result.second != null
                         )
                     }
                 }
@@ -154,6 +206,7 @@ class MetronomeVM {
             }
         }
 
+        /** метод формирования {[SongData]} на основе стейта */
         private fun getSongDataFromState() = _state.value.let {
             SongData(
                 id = it.songId,
@@ -161,6 +214,12 @@ class MetronomeVM {
                 speed = it.metronomeState.bmp,
                 tactSize = it.metronomeState.tactSize
             )
+        }
+
+        /** сохранение песни в БД */
+        private suspend fun saveSong(): Unit = withContext(MDispatchers.IO) {
+            val saveStatus = songRep.saveSong(getSongDataFromState())
+            _state.update { it.copy(saveStatus = saveStatus) }
         }
 
         override fun onCleared() {

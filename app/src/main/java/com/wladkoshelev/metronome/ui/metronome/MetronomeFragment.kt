@@ -1,33 +1,74 @@
 package com.wladkoshelev.metronome.ui.metronome
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
+import com.wladkoshelev.metronome.R
 import com.wladkoshelev.metronome.destinations.MetronomeFragmentDestination
+import com.wladkoshelev.metronome.theme.AlertDialogInnerPadding
+import com.wladkoshelev.metronome.theme.AlertDialogShape
+import com.wladkoshelev.metronome.theme.BottomControlButtonSize
+import com.wladkoshelev.metronome.theme.BottomControlPadding
+import com.wladkoshelev.metronome.theme.MainTextSelectionColor
+import com.wladkoshelev.metronome.theme.MainTextStyle
+import com.wladkoshelev.metronome.theme.ModalWindowBackgroundColor
+import com.wladkoshelev.metronome.theme.SecondTextStyle
 import com.wladkoshelev.metronome.ui.metronome.MetronomeVM.VM.Event
 import com.wladkoshelev.metronome.ui.metronome.MetronomeVM.VM.Intent
 import com.wladkoshelev.metronome.ui.metronome.MetronomeVM.VM.State
+import com.wladkoshelev.metronome.ui.views.EditableFragmentTitle
+import com.wladkoshelev.metronome.ui.views.MAlertButton
+import com.wladkoshelev.metronome.ui.views.MAlertButtonsView
+import com.wladkoshelev.metronome.ui.views.MAlertDialog
+import com.wladkoshelev.metronome.ui.views.MIconButton
+import com.wladkoshelev.metronome.ui.views.parseToTextToEditableFragment
 import com.wladkoshelev.metronome.utils.navigation.NavigationInstance
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterIsInstance
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -37,6 +78,7 @@ fun getMetronomeFragment(songId: String? = null) = NavigationInstance(MetronomeF
 @Destination
 @Composable
 fun MetronomeFragment(
+    navController: NavController,
     songsId: String?
 ) {
     val vm = koinViewModel<MetronomeVM.VM> { MetronomeVM().params(songsId) }
@@ -48,20 +90,54 @@ fun MetronomeFragment(
         intent = intent
     )
 
+    BackHandler {
+        intent(Intent.OnBackClick())
+    }
+
+    LaunchedEffect(Unit) {
+        event.filterIsInstance<Event.OnBack>().collect {
+            navController.popBackStack()
+        }
+    }
+
+    /** Алерт для ввода Скорости */
     InputAlertDialog(
-        title = "настройка бмп",
+        title = stringResource(R.string.metronome_bmp_title),
         isShow = state.isShowEditBmp,
         onDismiss = { intent(Intent.IsShowEditBmp(false)) },
         defaultValue = state.metronomeState.bmp,
         onSuccess = { intent(Intent.SetSpeed(it)) }
     )
 
+    /** Алерт для редактирования Размера Такта */
     InputAlertDialog(
-        title = "настройка размера такса",
+        title = stringResource(R.string.metronome_tact_size_title),
         isShow = state.isShowEditTactSize,
         onDismiss = { intent(Intent.IsShowEditTactSize(false)) },
         defaultValue = state.metronomeState.tactSize,
         onSuccess = { intent(Intent.SetSTactSize(it)) }
+    )
+
+    /** Алерт для выхода без сохранения */
+    MAlertDialog(
+        isShow = state.isShowExitWithoutSaveAlert,
+        title = stringResource(R.string.exit_without_save_title),
+        text = stringResource(R.string.exit_without_save_message),
+        buttons = listOf(
+            MAlertButton(stringResource(R.string.exit_without_save_save_and_exit)) { intent(Intent.SaveAndExit()) },
+            MAlertButton(stringResource(R.string.exit_without_save_exit_without_save)) { intent(Intent.ExitWithoutSave()) },
+        )
+    )
+
+    /** Алерт удаления песни */
+    MAlertDialog(
+        isShow = state.isShowDeleteAlert,
+        onDismiss = { intent(Intent.IsShowDeleteAlert(false)) },
+        title = stringResource(R.string.metronome_delete_song),
+        buttons = listOf(
+            MAlertButton(stringResource(R.string.alert_delete_playlist_yes)) { intent(Intent.DeleteSong()) },
+            MAlertButton(stringResource(R.string.alert_delete_playlist_no)) { intent(Intent.IsShowDeleteAlert(false)) }
+        )
     )
 
 }
@@ -72,47 +148,62 @@ private fun UI(
     state: State = State(songId = "songID"),
     intent: (Intent) -> Unit = {}
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize()
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
     ) {
-
-        Text(
+        Column(
             modifier = Modifier
-                .clickable { intent(Intent.IsShowEditBmp(true)) },
-            text = state.metronomeState.bmp.toString()
-        )
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            EditableFragmentTitle(
+                title = state.songName,
+                onTextChange = { intent(Intent.SetName(it)) },
+                hint = stringResource(R.string.metronome_song_name_hint),
+                errorText = state.saveStatus.parseToTextToEditableFragment()
+            )
 
-        Text(
+            Spacer(modifier = Modifier.weight(1f))
+            TactSizeBlock(
+                modifier = Modifier.fillMaxWidth(),
+                tactSize = state.metronomeState.tactSize,
+                intent = intent
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            BmpBlock(
+                modifier = Modifier.fillMaxWidth(),
+                bmp = state.metronomeState.bmp,
+                intent = intent
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            MIconButton(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally),
+                text = null,
+                iconRes = if (state.metronomeState.isPlay) R.drawable.ic_pause else R.drawable.ic_play,
+                iconSize = 60.dp,
+                onClick = {
+                    intent(
+                        if (state.metronomeState.isPlay) Intent.Stop()
+                        else Intent.Play()
+                    )
+                }
+            )
+            Spacer(modifier = Modifier.weight(1f))
+        }
+
+        BottomControlPanel(
             modifier = Modifier
-                .clickable { intent(Intent.IsShowEditTactSize(true)) },
-            text = state.metronomeState.tactSize.toString()
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter),
+            intent = intent,
+            isCanSave = state.isCanSave,
+            isCanDelete = state.isCanDelete
         )
-
-
-        Button(onClick = { intent(Intent.Play()) }) {
-            Text(text = "игрта")
-        }
-        Button(onClick = { intent(Intent.Stop()) }) {
-            Text(text = "стоп")
-        }
-        TextField(
-            value = state.songName,
-            onValueChange = {
-                intent(Intent.SetName(it))
-            }
-        )
-        if (state.isShowSave) {
-            Button(onClick = { intent(Intent.SaveSong()) }) {
-                Text(text = "save")
-            }
-        }
-        if (state.isShowDelete) {
-            Button(onClick = { intent(Intent.DeleteSong()) }) {
-                Text(text = "delete")
-            }
-        }
-
     }
+
+
 }
 
 
@@ -129,38 +220,225 @@ private fun InputAlertDialog(
     defaultValue: Int = 120,
 ) {
     if (isShow) {
-        var text by remember(defaultValue) { mutableStateOf(defaultValue.toString()) }
+        var text by remember(defaultValue) {
+            val value = defaultValue.toString()
+            mutableStateOf(TextFieldValue(value, TextRange(value.length)))
+        }
+        val focusRequest = remember { FocusRequester() }
+        LaunchedEffect(Unit) {
+            delay(300)
+            focusRequest.requestFocus()
+        }
+
 
         Dialog(onDismissRequest = { onDismiss() }) {
             Column(
                 modifier = Modifier
-                    .background(Color.White)
+                    .clip(AlertDialogShape)
+                    .background(ModalWindowBackgroundColor)
+                    .padding(AlertDialogInnerPadding)
             ) {
-                Text(text = title)
-                TextField(
-                    value = text,
-                    onValueChange = {
-                        if (it.isDigitsOnly()) {
-                            text = it
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true
+                Text(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally),
+                    text = title,
+                    style = titleTextStyle
                 )
-                Button(onClick = {
-                    onSuccess(
-                        runCatching { text.toInt() }.getOrNull() ?: 0
+                Spacer(modifier = Modifier.height(10.dp))
+
+                CompositionLocalProvider(LocalTextSelectionColors provides MainTextSelectionColor) {
+                    BasicTextField(
+                        modifier = Modifier
+                            .focusRequester(focusRequest)
+                            .fillMaxWidth(),
+                        value = text,
+                        onValueChange = {
+                            if (it.text.isDigitsOnly()) {
+                                text = it
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        textStyle = valueTextStyle.copy(
+                            textAlign = TextAlign.Center
+                        )
+                    ) {
+                        it()
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+                MAlertButtonsView(
+                    buttons = listOf(
+                        MAlertButton(stringResource(R.string.metronome_input_save)) {
+                            onSuccess(text.text.toIntOrNull() ?: 0)
+                            onDismiss()
+                        },
+                        MAlertButton(stringResource(R.string.metronome_input_cancel)) {
+                            onDismiss()
+                        }
                     )
-                    onDismiss()
-                }) {
-                    Text(text = "готово")
-                }
-                Button(onClick = { onDismiss() }) {
-                    Text(text = "закрыть")
-                }
+                )
             }
         }
     }
-
 }
 
+/** нижняя панель управления */
+@Composable
+@Preview
+private fun BottomControlPanel(
+    modifier: Modifier = Modifier,
+    intent: (Intent) -> Unit = {},
+    isCanSave: Boolean = true,
+    isCanDelete: Boolean = true
+) {
+    Box(
+        modifier = modifier
+            .width(IntrinsicSize.Max)
+            .height(IntrinsicSize.Max)
+            .padding(BottomControlPadding)
+    ) {
+        Row {
+            Spacer(modifier = Modifier.weight(1f))
+            MIconButton(
+                iconRes = R.drawable.ic_save,
+                text = null,
+                iconSize = BottomControlButtonSize,
+                onClick = { intent(Intent.SaveSong()) },
+                isEnable = isCanSave
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            MIconButton(
+                iconRes = R.drawable.ic_delete,
+                text = null,
+                iconSize = BottomControlButtonSize,
+                onClick = { intent(Intent.IsShowDeleteAlert(true)) },
+                isEnable = isCanDelete
+            )
+            Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+
+/** блок для настройки Скорости */
+@Composable
+@Preview
+private fun BmpBlock(
+    modifier: Modifier = Modifier,
+    bmp: Int = 0,
+    intent: (Intent) -> Unit = {}
+) {
+    Box(
+        modifier = modifier
+            .width(IntrinsicSize.Max)
+            .height(IntrinsicSize.Max)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            MIconButton(
+                iconRes = null,
+                textSize = controlMetronomeButtonTextSize,
+                text = "-5",
+                onClick = { intent(Intent.SetSpeed(bmp - 5)) }
+            )
+            MIconButton(
+                iconRes = null,
+                textSize = controlMetronomeButtonTextSize,
+                text = " - ",
+                onClick = { intent(Intent.SetSpeed(bmp - 1)) }
+            )
+            Column(
+                modifier = Modifier.clickable {
+                    intent(Intent.IsShowEditBmp(true))
+                },
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = stringResource(R.string.metronome_bmp_title), style = titleTextStyle)
+                Text(
+                    text = bmp.toString(), style = valueTextStyle
+                )
+            }
+
+            MIconButton(
+                iconRes = null,
+                text = " + ",
+                textSize = controlMetronomeButtonTextSize,
+                onClick = { intent(Intent.SetSpeed(bmp + 1)) }
+            )
+            MIconButton(
+                iconRes = null,
+                textSize = controlMetronomeButtonTextSize,
+                text = "+5",
+                onClick = { intent(Intent.SetSpeed(bmp + 5)) }
+            )
+        }
+    }
+}
+
+/** блок для настройки Размера Такта */
+@Composable
+@Preview
+private fun TactSizeBlock(
+    modifier: Modifier = Modifier,
+    tactSize: Int = 0,
+    intent: (Intent) -> Unit = {}
+) {
+    Box(
+        modifier = modifier
+            .width(IntrinsicSize.Max)
+            .height(IntrinsicSize.Max)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            MIconButton(
+                iconRes = null,
+                text = " - ",
+                textSize = controlMetronomeButtonTextSize,
+                onClick = { intent(Intent.SetSTactSize(tactSize - 1)) }
+            )
+            Column(
+                modifier = Modifier.clickable {
+                    intent(Intent.IsShowEditTactSize(true))
+                },
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = stringResource(R.string.metronome_tact_size_title), style = titleTextStyle)
+                Text(
+                    text = tactSize.toString(), style = valueTextStyle
+                )
+            }
+
+            MIconButton(
+                iconRes = null,
+                text = " + ",
+                textSize = controlMetronomeButtonTextSize,
+                onClick = { intent(Intent.SetSTactSize(tactSize + 1)) }
+            )
+        }
+    }
+}
+
+
+/** стили текста для заголовков и значений блоков
+ *
+ * используется и в UI блоках и в Алерт Диалогов
+ *
+ * {[BmpBlock]} {[TactSizeBlock]} {[InputAlertDialog]} */
+private val valueTextStyle = MainTextStyle.copy(
+    fontSize = 40.sp
+)
+private val titleTextStyle = SecondTextStyle.copy(
+    fontSize = 20.sp
+)
+
+
+/** размер текста кнопок +-1/5 в UI блоках {[BmpBlock]} {[TactSizeBlock]} */
+private val controlMetronomeButtonTextSize = 30.sp
