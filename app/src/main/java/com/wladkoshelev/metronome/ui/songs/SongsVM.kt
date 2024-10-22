@@ -59,8 +59,8 @@ class SongsVM {
         val state = _state.asStateFlow()
 
         sealed interface Event {
-            /** перейти в Метроном с выбранной песней. доступно для всех режимов */
-            data class NavigateToMetronome(val songId: String?) : Event
+            /** перейти в Метроном с выбранной песней и ИД плейлиста. доступно для всех режимов */
+            data class NavigateToMetronome(val songId: String?, val playListID: String?) : Event
 
             /** редактировать Плейлист. доступно только для Плейлиста */
             data class NavigateToEditPlayList(val playListID: String) : Event
@@ -83,7 +83,7 @@ class SongsVM {
 
         fun sendIntent(intent: Intent) {
             when (intent) {
-                is Intent.SongClick -> _event.emit(Event.NavigateToMetronome(intent.song?.id))
+                is Intent.SongClick -> _event.emit(Event.NavigateToMetronome(songId = intent.song?.id, playListID = playListID))
                 is Intent.EditPlayListClick -> playListID?.let {
                     _event.emit(Event.NavigateToEditPlayList(it))
                 }

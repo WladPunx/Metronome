@@ -73,7 +73,7 @@ fun SongsFragment(
 
     LaunchedEffect(Unit) {
         event.filterIsInstance<Event.NavigateToMetronome>().collect {
-            navController.myNavigate(getMetronomeFragment(it.songId))
+            navController.myNavigate(getMetronomeFragment(it.songId, it.playListID))
         }
     }
 

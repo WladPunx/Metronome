@@ -7,6 +7,7 @@ import com.wladkoshelev.metronome.database.SongREP
 import com.wladkoshelev.metronome.database.SongSaveStatus
 import com.wladkoshelev.metronome.metronome.MetronomeREP
 import com.wladkoshelev.metronome.metronome.MetronomeStateData
+import com.wladkoshelev.metronome.ui.metronome.MetronomeVM.VM.State
 import com.wladkoshelev.metronome.utils.MDispatchers
 import com.wladkoshelev.metronome.utils.SafeScope.toSafeScope
 import com.wladkoshelev.metronome.utils.flow.SingleFlowEvent
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
@@ -29,24 +31,50 @@ import java.util.UUID
 
 class MetronomeVM {
 
-    fun params(songId: String?) = parametersOf(songId)
+    fun params(songId: String?, playListID: String?) = parametersOf(songId, playListID)
 
     fun mModule() = module {
-        viewModel<VM> { (songID: String?) ->
+        viewModel<VM> { (songID: String?, playListID: String?) ->
             VM(
                 songRep = get<SongREP.Face> { SongREP().params() },
                 metronomeREP = get<MetronomeREP.Face> { MetronomeREP().params() },
-                songId = songID
+                songId = songID,
+                playListID = playListID
             )
         }
     }
 
+
+    /** ВМ работает за счет передачи в нее ИДшника песни и Плейлиста
+     *
+     * если ИД песни == null, то это просто заход в метраном. у {[_state]} поле ИДшника {[State.songId]} будет сгенерено случайно
+     *
+     * от ИД песни работают слушатели БД, которые понимают "есть ли песня с таким ИД в БД?
+     * есть ли изменения в настройках метранома от того, что есть БД?"
+     *
+     * {[playListID]} нужен чтобы следить за следующим и предыдущим треком в плейлисте. если он ==null, то значит мы выбрали песню вне плейлиста */
     class VM(
         private val metronomeREP: MetronomeREP.Face,
         private val songRep: SongREP.Face,
         songId: String?,
+        private val playListID: String?
     ) : ViewModel() {
         private val mScope = viewModelScope.toSafeScope(MDispatchers.IO)
+
+        /** модель для Алерта про выход без сохранения */
+        data class AlertModel(
+            /** показывать Алерт? */
+            val isShow: Boolean,
+            /** действие при "Сохранить и выйти" */
+            val onSuccess: () -> Unit,
+            /** действие при Закрыть */
+            val onCancelClick: () -> Unit
+        ) {
+            companion object {
+                /** пустая модель для скрытия */
+                val None = AlertModel(false, {}, {})
+            }
+        }
 
         data class State(
             /** состояние метранома */
@@ -66,9 +94,13 @@ class MetronomeVM {
             /** статус сохранения песни для отображения ошибок. если ==Success, то ошибка не показывается */
             val saveStatus: SongSaveStatus = SongSaveStatus.SUCCESS,
             /** показывать Алерт для выхода без сохранения? */
-            val isShowExitWithoutSaveAlert: Boolean = false,
+            val isShowExitWithoutSaveAlert: AlertModel = AlertModel.None,
             /** показывать Алерт удаления песни? */
-            val isShowDeleteAlert: Boolean = false
+            val isShowDeleteAlert: Boolean = false,
+            /** предыдущая песня, если есть */
+            val previousSong: SongData? = null,
+            /** предыдущая песня, если есть */
+            val nextSong: SongData? = null
         )
 
         private val _state = MutableStateFlow(
@@ -120,11 +152,11 @@ class MetronomeVM {
             /** показывать алерт удаления песни? */
             data class IsShowDeleteAlert(val isShow: Boolean) : Intent
 
-            /** сохранить и выйти с фрагмента */
-            class SaveAndExit() : Intent
+            /** клик на следующую песню в плейлисте */
+            class NextSongClick() : Intent
 
-            /** выйти без сохранения */
-            class ExitWithoutSave() : Intent
+            /** клик на предыдущую песню в плейлисте */
+            class PreviosSongClick() : Intent
         }
 
         fun sendIntent(intent: Intent) {
@@ -142,22 +174,19 @@ class MetronomeVM {
 
                 is Intent.IsShowEditBmp -> _state.update { it.copy(isShowEditBmp = intent.isShow) }
                 is Intent.IsShowEditTactSize -> _state.update { it.copy(isShowEditTactSize = intent.isShow) }
-                is Intent.OnBackClick -> _state.update {
-                    val isShowExitAlert = it.isCanSave && (it.songName.isNotEmpty() || it.isCanDelete)
-                    if (isShowExitAlert.not()) _event.emit(Event.OnBack())
-                    it.copy(isShowExitWithoutSaveAlert = isShowExitAlert)
-                }
-
-                is Intent.SaveAndExit -> mScope.launch {
-                    saveSong()
-                    _state.update { it.copy(isShowExitWithoutSaveAlert = false) }
-                    if (_state.value.saveStatus == SongSaveStatus.SUCCESS) {
-                        _event.emit(Event.OnBack())
+                is Intent.OnBackClick -> checkSave { _event.emit(Event.OnBack()) }
+                is Intent.IsShowDeleteAlert -> _state.update { it.copy(isShowDeleteAlert = intent.isShow) }
+                is Intent.NextSongClick -> _state.value.nextSong?.let { nextSong ->
+                    checkSave {
+                        _state.update { it.copy(songId = nextSong.id) }
                     }
                 }
 
-                is Intent.ExitWithoutSave -> _event.emit(Event.OnBack())
-                is Intent.IsShowDeleteAlert -> _state.update { it.copy(isShowDeleteAlert = intent.isShow) }
+                is Intent.PreviosSongClick -> _state.value.previousSong?.let { previosSong ->
+                    checkSave {
+                        _state.update { it.copy(songId = previosSong.id) }
+                    }
+                }
             }
         }
 
@@ -220,6 +249,58 @@ class MetronomeVM {
         private suspend fun saveSong(): Unit = withContext(MDispatchers.IO) {
             val saveStatus = songRep.saveSong(getSongDataFromState())
             _state.update { it.copy(saveStatus = saveStatus) }
+        }
+
+
+        /** приватный метод для проверки "Надо ли показывать о несохраненных изменениях?"
+         *
+         * {[invoke]} - это логика, что надо сделать, после успешного сохранения или после отказа от сохранения */
+        private fun checkSave(
+            invoke: () -> Unit
+        ) {
+            _state.update {
+                val isShowExitAlert = it.isCanSave && (it.songName.isNotEmpty() || it.isCanDelete)
+                if (isShowExitAlert.not()) {
+                    invoke()
+                    return
+                    /** обязательно делать ретурн, иначе может быть баг: рандомные показы о сохранении, когда нет изменений */
+                }
+                it.copy(isShowExitWithoutSaveAlert = AlertModel(
+                    isShow = isShowExitAlert,
+                    onSuccess = {
+                        mScope.launch {
+                            _state.update { it.copy(isShowExitWithoutSaveAlert = AlertModel.None) }
+                            saveSong()
+                            if (_state.value.saveStatus == SongSaveStatus.SUCCESS) {
+                                invoke()
+                            }
+                        }
+                    },
+                    onCancelClick = {
+                        _state.update { it.copy(isShowExitWithoutSaveAlert = AlertModel.None) }
+                        invoke()
+                    }
+                ))
+            }
+        }
+
+
+        /** слушатель для подготовки следующией и предыдущей песен */
+        init {
+            songRep.allPlayLists
+                .mapNotNull { it.find { it.id == playListID } }
+                .combine(currentSongFromDB) { playList, song ->
+                    val currentIndex = playList.songsList.indexOf(song)
+                    val previousSong = playList.songsList.getOrNull(currentIndex - 1)
+                    val nextSong = playList.songsList.getOrNull(currentIndex + 1)
+                    _state.update {
+                        it.copy(
+                            previousSong = previousSong,
+                            nextSong = nextSong
+                        )
+                    }
+                }
+                .launchIn(mScope)
         }
 
         override fun onCleared() {

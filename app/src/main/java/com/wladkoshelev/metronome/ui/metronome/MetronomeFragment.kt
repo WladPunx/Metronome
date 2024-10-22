@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
@@ -47,6 +48,7 @@ import androidx.navigation.NavController
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.wladkoshelev.metronome.R
+import com.wladkoshelev.metronome.database.SongData
 import com.wladkoshelev.metronome.destinations.MetronomeFragmentDestination
 import com.wladkoshelev.metronome.theme.AlertDialogInnerPadding
 import com.wladkoshelev.metronome.theme.AlertDialogShape
@@ -72,16 +74,18 @@ import kotlinx.coroutines.flow.filterIsInstance
 import org.koin.androidx.compose.koinViewModel
 
 
-fun getMetronomeFragment(songId: String? = null) = NavigationInstance(MetronomeFragmentDestination(songsId = songId))
+fun getMetronomeFragment(songId: String? = null, playListID: String? = null) =
+    NavigationInstance(MetronomeFragmentDestination(songsId = songId, playListID = playListID))
 
 @RootNavGraph
 @Destination
 @Composable
 fun MetronomeFragment(
     navController: NavController,
-    songsId: String?
+    songsId: String?,
+    playListID: String?
 ) {
-    val vm = koinViewModel<MetronomeVM.VM> { MetronomeVM().params(songsId) }
+    val vm = koinViewModel<MetronomeVM.VM> { MetronomeVM().params(songId = songsId, playListID = playListID) }
     val state: State by vm.state.collectAsStateWithLifecycle()
     val intent: (Intent) -> Unit by remember { mutableStateOf(vm::sendIntent) }
     val event: Flow<Event> by remember { mutableStateOf(vm.event) }
@@ -120,12 +124,12 @@ fun MetronomeFragment(
 
     /** Алерт для выхода без сохранения */
     MAlertDialog(
-        isShow = state.isShowExitWithoutSaveAlert,
+        isShow = state.isShowExitWithoutSaveAlert.isShow,
         title = stringResource(R.string.exit_without_save_title),
         text = stringResource(R.string.exit_without_save_message),
         buttons = listOf(
-            MAlertButton(stringResource(R.string.exit_without_save_save_and_exit)) { intent(Intent.SaveAndExit()) },
-            MAlertButton(stringResource(R.string.exit_without_save_exit_without_save)) { intent(Intent.ExitWithoutSave()) },
+            MAlertButton(stringResource(R.string.exit_without_save_save_and_exit)) { state.isShowExitWithoutSaveAlert.onSuccess() },
+            MAlertButton(stringResource(R.string.exit_without_save_exit_without_save)) { state.isShowExitWithoutSaveAlert.onCancelClick() },
         )
     )
 
@@ -163,7 +167,6 @@ private fun UI(
                 hint = stringResource(R.string.metronome_song_name_hint),
                 errorText = state.saveStatus.parseToTextToEditableFragment()
             )
-
             Spacer(modifier = Modifier.weight(1f))
             TactSizeBlock(
                 modifier = Modifier.fillMaxWidth(),
@@ -177,20 +180,15 @@ private fun UI(
                 intent = intent
             )
             Spacer(modifier = Modifier.weight(1f))
-            MIconButton(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally),
-                text = null,
-                iconRes = if (state.metronomeState.isPlay) R.drawable.ic_pause else R.drawable.ic_play,
-                iconSize = 60.dp,
-                onClick = {
-                    intent(
-                        if (state.metronomeState.isPlay) Intent.Stop()
-                        else Intent.Play()
-                    )
-                }
+            PlayControlBlock(
+                modifier = Modifier.fillMaxWidth(),
+                isPlay = state.metronomeState.isPlay,
+                intent = intent,
+                previousSong = state.previousSong,
+                nextSong = state.nextSong
             )
             Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(100.dp))
         }
 
         BottomControlPanel(
@@ -422,6 +420,78 @@ private fun TactSizeBlock(
                 textSize = controlMetronomeButtonTextSize,
                 onClick = { intent(Intent.SetSTactSize(tactSize + 1)) }
             )
+        }
+    }
+}
+
+
+/** панель управления песнями: включить, пауза, переключение песен */
+@Composable
+@Preview
+private fun PlayControlBlock(
+    modifier: Modifier = Modifier,
+    isPlay: Boolean = true,
+    intent: (Intent) -> Unit = {},
+    previousSong: SongData? = null,
+    nextSong: SongData? = null
+) {
+    val nextSongImageSize = 50.dp
+    val playSongImageSize = 60.dp
+    Box(
+        modifier = modifier
+            .width(IntrinsicSize.Max)
+            .height(IntrinsicSize.Max)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                previousSong?.let {
+                    MIconButton(
+                        modifier = Modifier
+                            .rotate(180f),
+                        text = null,
+                        iconRes = R.drawable.ic_next_song,
+                        iconSize = nextSongImageSize,
+                        onClick = { intent(Intent.PreviosSongClick()) }
+                    )
+                }
+            }
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                MIconButton(
+                    modifier = Modifier,
+                    text = null,
+                    iconRes = if (isPlay) R.drawable.ic_pause else R.drawable.ic_play,
+                    iconSize = playSongImageSize,
+                    onClick = {
+                        intent(
+                            if (isPlay) Intent.Stop()
+                            else Intent.Play()
+                        )
+                    }
+                )
+            }
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                nextSong?.let {
+                    MIconButton(
+                        modifier = Modifier,
+                        text = null,
+                        iconRes = R.drawable.ic_next_song,
+                        iconSize = nextSongImageSize,
+                        onClick = { intent(Intent.NextSongClick()) }
+                    )
+                }
+            }
         }
     }
 }
