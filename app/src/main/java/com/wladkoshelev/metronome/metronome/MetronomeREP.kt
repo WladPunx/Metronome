@@ -22,12 +22,16 @@ class MetronomeREP {
         fun setTactSize(tactSize: Int)
         fun setBmp(bmp: Int)
         val state: StateFlow<MetronomeStateData>
+        val soundNameList: List<String>
+        fun setMainSound(title: String)
+        fun setSecondSound(title: String)
     }
 
     class Impl(
         private val metronomeLDS: MetronomeLDS.Face
     ) : Face {
         override val state = metronomeLDS.state
+        override val soundNameList = metronomeLDS.soundNameList
 
         override fun start() {
             metronomeLDS.start()
@@ -43,6 +47,14 @@ class MetronomeREP {
 
         override fun setBmp(bmp: Int) {
             metronomeLDS.setBmp(bmp)
+        }
+
+        override fun setMainSound(title: String) {
+            metronomeLDS.setMainSound(title)
+        }
+
+        override fun setSecondSound(title: String) {
+            metronomeLDS.setSecondSound(title)
         }
     }
 }

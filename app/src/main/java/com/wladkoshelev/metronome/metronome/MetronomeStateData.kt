@@ -13,7 +13,11 @@ data class MetronomeStateData(
     /** статус проигрывания */
     val isPlay: Boolean = false,
     /** текущий удар в такте */
-    private val _currentBeatCount: Int = START_BEAT
+    private val _currentBeatCount: Int = START_BEAT,
+    /** название звука для Сильной доли */
+    val mainSoundName: String = "",
+    /** название звука Слабой доли */
+    val secondSoundName: String = ""
 ) {
 
     val tactSize = _tactSize.coerceIn(MIN_TACT_SIZE, MAX_TACT_SIZE)

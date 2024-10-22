@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -33,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
@@ -52,8 +55,12 @@ import com.wladkoshelev.metronome.database.SongData
 import com.wladkoshelev.metronome.destinations.MetronomeFragmentDestination
 import com.wladkoshelev.metronome.theme.AlertDialogInnerPadding
 import com.wladkoshelev.metronome.theme.AlertDialogShape
+import com.wladkoshelev.metronome.theme.AppBarDividerColor
 import com.wladkoshelev.metronome.theme.BottomControlButtonSize
 import com.wladkoshelev.metronome.theme.BottomControlPadding
+import com.wladkoshelev.metronome.theme.ButtonShape
+import com.wladkoshelev.metronome.theme.ButtonTextColor
+import com.wladkoshelev.metronome.theme.DefaultButtonColor
 import com.wladkoshelev.metronome.theme.MainTextSelectionColor
 import com.wladkoshelev.metronome.theme.MainTextStyle
 import com.wladkoshelev.metronome.theme.ModalWindowBackgroundColor
@@ -65,6 +72,7 @@ import com.wladkoshelev.metronome.ui.views.EditableFragmentTitle
 import com.wladkoshelev.metronome.ui.views.MAlertButton
 import com.wladkoshelev.metronome.ui.views.MAlertButtonsView
 import com.wladkoshelev.metronome.ui.views.MAlertDialog
+import com.wladkoshelev.metronome.ui.views.MBottomSheet
 import com.wladkoshelev.metronome.ui.views.MIconButton
 import com.wladkoshelev.metronome.ui.views.parseToTextToEditableFragment
 import com.wladkoshelev.metronome.utils.navigation.NavigationInstance
@@ -143,13 +151,21 @@ fun MetronomeFragment(
             MAlertButton(stringResource(R.string.alert_delete_playlist_no)) { intent(Intent.IsShowDeleteAlert(false)) }
         )
     )
+    /** окно настроек звука */
+    SoundSettingsBottomSheet(
+        isShow = state.isShowSoundSettings,
+        soundList = state.soundNameList,
+        mainSound = state.metronomeState.mainSoundName,
+        secondSound = state.metronomeState.secondSoundName,
+        intent = intent
+    )
 
 }
 
 @Composable
 @Preview
 private fun UI(
-    state: State = State(songId = "songID"),
+    state: State = State(songId = "songID", soundNameList = emptyList()),
     intent: (Intent) -> Unit = {}
 ) {
     Box(
@@ -305,6 +321,13 @@ private fun BottomControlPanel(
                 iconSize = BottomControlButtonSize,
                 onClick = { intent(Intent.SaveSong()) },
                 isEnable = isCanSave
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            MIconButton(
+                iconRes = R.drawable.ic_settings,
+                text = null,
+                iconSize = BottomControlButtonSize,
+                onClick = { intent(Intent.IsShowSoundSettings(true)) }
             )
             Spacer(modifier = Modifier.weight(1f))
             MIconButton(
@@ -492,6 +515,102 @@ private fun PlayControlBlock(
                     )
                 }
             }
+        }
+    }
+}
+
+
+/** список доступных звуков.
+ *
+ * переиспользуемая View для Сильной и для Слабой долей в {[SoundSettingsBottomSheet]}*/
+@Composable
+@Preview
+private fun SoundItems(
+    modifier: Modifier = Modifier,
+    soundItems: List<String> = emptyList(),
+    selectItem: String = "",
+    onSelect: (String) -> Unit = {},
+    title: String = ""
+) {
+    Column(
+        modifier = modifier
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = title,
+            style = MainTextStyle,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        LazyColumn {
+            itemsIndexed(soundItems, { index, item -> item.toString() }) { index, item ->
+                val isSelect = item == selectItem
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(ButtonShape)
+                        .background(if (isSelect) DefaultButtonColor else Color.Transparent)
+                        .clickable { onSelect(item) }
+                        .padding(10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = item,
+                        style = SecondTextStyle,
+                        color = if (isSelect) ButtonTextColor else SecondTextStyle.color
+                    )
+                }
+            }
+            item { Spacer(modifier = Modifier.height(100.dp)) }
+        }
+    }
+}
+
+
+/** модальное окно настроек звука */
+@Composable
+@Preview
+private fun SoundSettingsBottomSheet(
+    isShow: Boolean = false,
+    soundList: List<String> = emptyList(),
+    mainSound: String = "",
+    secondSound: String = "",
+    intent: (Intent) -> Unit = {}
+) {
+    MBottomSheet(
+        onDismiss = { intent(Intent.IsShowSoundSettings(false)) },
+        isShow = isShow
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(R.string.metronome_beat_settings_title),
+            style = MainTextStyle,
+            textAlign = TextAlign.Center,
+            fontSize = 25.sp
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .background(AppBarDividerColor)
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Row {
+            SoundItems(
+                modifier = Modifier.weight(1f),
+                soundItems = soundList,
+                selectItem = mainSound,
+                onSelect = { intent(Intent.SetMainSound(it)) },
+                title = stringResource(R.string.metronome_downbeat)
+            )
+            SoundItems(
+                modifier = Modifier.weight(1f),
+                soundItems = soundList,
+                selectItem = secondSound,
+                onSelect = { intent(Intent.SetSecondSound(it)) },
+                title = stringResource(R.string.metronome_upbeat)
+            )
         }
     }
 }

@@ -37,4 +37,8 @@
     <string name="metronome_input_cancel">Отмена</string>
     <string name="metronome_delete_song">Удалить песню?</string>
 
+    <string name="metronome_downbeat">Сильная доля</string>
+    <string name="metronome_upbeat">Слабая доля</string>
+    <string name="metronome_beat_settings_title">Настройка звука</string>
+
 </resources>

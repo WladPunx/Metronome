@@ -52,7 +52,9 @@ class MetronomeVM {
      * от ИД песни работают слушатели БД, которые понимают "есть ли песня с таким ИД в БД?
      * есть ли изменения в настройках метранома от того, что есть БД?"
      *
-     * {[playListID]} нужен чтобы следить за следующим и предыдущим треком в плейлисте. если он ==null, то значит мы выбрали песню вне плейлиста */
+     * {[playListID]} нужен чтобы следить за следующим и предыдущим треком в плейлисте. если он ==null, то значит мы выбрали песню вне плейлиста
+     *
+     * состояние метранома берется и сетается напрямую из {[MetronomeREP.Face.state]}. ВМ здесь работает лишь как прокси */
     class VM(
         private val metronomeREP: MetronomeREP.Face,
         private val songRep: SongREP.Face,
@@ -100,12 +102,17 @@ class MetronomeVM {
             /** предыдущая песня, если есть */
             val previousSong: SongData? = null,
             /** предыдущая песня, если есть */
-            val nextSong: SongData? = null
+            val nextSong: SongData? = null,
+            /** показывать модалку с настройками звука? */
+            val isShowSoundSettings: Boolean = false,
+            /** список доступных звуков. текущие настройки звуков лежат в {[metronomeState]} */
+            val soundNameList: List<String>
         )
 
         private val _state = MutableStateFlow(
             State(
-                songId = songId ?: UUID.randomUUID().toString()
+                songId = songId ?: UUID.randomUUID().toString(),
+                soundNameList = metronomeREP.soundNameList
             )
         )
         val state = _state.asStateFlow()
@@ -157,6 +164,15 @@ class MetronomeVM {
 
             /** клик на предыдущую песню в плейлисте */
             class PreviosSongClick() : Intent
+
+            /** показывать модалку с настройками звуков? */
+            data class IsShowSoundSettings(val isShow: Boolean) : Intent
+
+            /** клик изменения звука Сильной доли */
+            data class SetMainSound(val title: String) : Intent
+
+            /** клик изменение звука Слабой доли */
+            data class SetSecondSound(val title: String) : Intent
         }
 
         fun sendIntent(intent: Intent) {
@@ -187,6 +203,10 @@ class MetronomeVM {
                         _state.update { it.copy(songId = previosSong.id) }
                     }
                 }
+
+                is Intent.IsShowSoundSettings -> _state.update { it.copy(isShowSoundSettings = intent.isShow) }
+                is Intent.SetMainSound -> metronomeREP.setMainSound(intent.title)
+                is Intent.SetSecondSound -> metronomeREP.setSecondSound(intent.title)
             }
         }
 

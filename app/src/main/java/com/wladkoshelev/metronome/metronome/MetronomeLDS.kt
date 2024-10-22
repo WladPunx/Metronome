@@ -1,11 +1,14 @@
 package com.wladkoshelev.metronome.metronome
 
+import android.app.Application
+import android.content.Context
 import android.media.AudioManager
 import android.media.ToneGenerator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import org.koin.android.ext.koin.androidApplication
 import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
 import java.util.Calendar
@@ -20,7 +23,7 @@ class MetronomeLDS {
     fun mModule() = module {
         factory<Face> {
             Impl(
-
+                apl = androidApplication()
             )
         }
     }
@@ -31,12 +34,43 @@ class MetronomeLDS {
         fun setTactSize(tactSize: Int)
         fun setBmp(bmp: Int)
         val state: StateFlow<MetronomeStateData>
+        val soundNameList: List<String>
+        fun setMainSound(title: String)
+        fun setSecondSound(title: String)
     }
 
-    class Impl : Face {
+    class Impl(
+        apl: Application
+    ) : Face {
+
+        /** ШаредПреф настроек звуков Метранома */
+        private val soundSharedPref = apl.getSharedPreferences("MetronomeSoundSettings", Context.MODE_PRIVATE)
+
+        /** звук Сильной Доли */
+        private var mainSound = soundSharedPref.getString(MAIN_SOUND, null).let { param ->
+            MetronomeSoundEntity.values().find { it.title == param } ?: MetronomeSoundEntity.values().first()
+        }
+
+        /** звук Слабой доли */
+        private var secondSound = soundSharedPref.getString(SECOND_SOUND, null).let { param ->
+            MetronomeSoundEntity.values().find { it.title == param } ?: MetronomeSoundEntity.values()[1]
+        }
+
+        /** полный список доступных звуков. только имена {[MetronomeSoundEntity.title]}, т.к. надо отдать Domain модель наружу */
+        override val soundNameList = MetronomeSoundEntity.values().map { it.title }
 
         private val _state = MutableStateFlow(MetronomeStateData())
         override val state = _state.asStateFlow()
+
+        /** дэфолтная установка названия звуков в стейт Метранома */
+        init {
+            _state.update {
+                it.copy(
+                    mainSoundName = mainSound.title,
+                    secondSoundName = secondSound.title
+                )
+            }
+        }
 
         /** запуск проигрывания метранома с отложенным временем {[MetronomeStateData.nextBeatTime]} */
         override fun start() {
@@ -82,7 +116,7 @@ class MetronomeLDS {
                         if (state.isPlay.not()) return@timerTask
 
                         toneGenerator.startTone(
-                            if (state.currentBeatCount == MetronomeStateData.START_BEAT) ToneGenerator.TONE_PROP_BEEP else ToneGenerator.TONE_CDMA_PIP,
+                            if (state.currentBeatCount == MetronomeStateData.START_BEAT) mainSound.sound else secondSound.sound,
                             150
                         )
 
@@ -95,6 +129,50 @@ class MetronomeLDS {
                 },
                 Date(_state.value.nextBeatTime)
             )
+        }
+
+
+        /** установка звука Сильной доли */
+        override fun setMainSound(title: String) {
+            MetronomeSoundEntity.values().find {
+                it.title == title
+            }?.let { sound ->
+                if (sound != mainSound) {
+                    _state.update {
+                        soundSharedPref
+                            .edit()
+                            .putString(MAIN_SOUND, sound.title)
+                            .apply()
+                        mainSound = sound
+                        it.copy(mainSoundName = sound.title)
+                    }
+                }
+            }
+        }
+
+        /** установка звука Слабой доли */
+        override fun setSecondSound(title: String) {
+            MetronomeSoundEntity.values().find {
+                it.title == title
+            }?.let { sound ->
+                if (sound != secondSound) {
+                    _state.update {
+                        soundSharedPref
+                            .edit()
+                            .putString(SECOND_SOUND, sound.title)
+                            .apply()
+                        secondSound = sound
+                        it.copy(secondSoundName = sound.title)
+                    }
+                }
+            }
+        }
+
+
+        companion object {
+            /** константы для {[soundSharedPref]} */
+            private const val MAIN_SOUND = "MAIN_SOUND"
+            private const val SECOND_SOUND = "SECOND_SOUND"
         }
 
 
