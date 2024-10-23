@@ -8,6 +8,7 @@ import com.wladkoshelev.metronome.database.SongSaveStatus
 import com.wladkoshelev.metronome.metronome.MetronomeREP
 import com.wladkoshelev.metronome.metronome.MetronomeStateData
 import com.wladkoshelev.metronome.ui.metronome.MetronomeVM.VM.State
+import com.wladkoshelev.metronome.ui.tap_the_beat.TapTheBeatComponent
 import com.wladkoshelev.metronome.utils.MDispatchers
 import com.wladkoshelev.metronome.utils.SafeScope.toSafeScope
 import com.wladkoshelev.metronome.utils.flow.SingleFlowEvent
@@ -62,6 +63,17 @@ class MetronomeVM {
         private val playListID: String?
     ) : ViewModel() {
         private val mScope = viewModelScope.toSafeScope(MDispatchers.IO)
+
+        /** компонента для Настукивания Бита руками */
+        val tapTheBeatComponent = TapTheBeatComponent(
+            scope = mScope
+        ).apply {
+            /** колбэк при нажатии Сохранить в компоненте */
+            applyBeatValue = {
+                sendIntent(Intent.SetSpeed(it))
+                sendIntent(TapTheBeatComponent.Intent.IsShow(false))
+            }
+        }
 
         /** модель для Алерта про выход без сохранения */
         data class AlertModel(
@@ -173,6 +185,9 @@ class MetronomeVM {
 
             /** клик изменение звука Слабой доли */
             data class SetSecondSound(val title: String) : Intent
+
+            /** клик Показать настукивание бита */
+            class ShowTapTheBeat() : Intent
         }
 
         fun sendIntent(intent: Intent) {
@@ -207,6 +222,10 @@ class MetronomeVM {
                 is Intent.IsShowSoundSettings -> _state.update { it.copy(isShowSoundSettings = intent.isShow) }
                 is Intent.SetMainSound -> metronomeREP.setMainSound(intent.title)
                 is Intent.SetSecondSound -> metronomeREP.setSecondSound(intent.title)
+                is Intent.ShowTapTheBeat -> {
+                    sendIntent(Intent.Stop())
+                    tapTheBeatComponent.sendIntent(TapTheBeatComponent.Intent.IsShow(true))
+                }
             }
         }
 

@@ -41,4 +41,6 @@
     <string name="metronome_upbeat">Слабая доля</string>
     <string name="metronome_beat_settings_title">Настройка звука</string>
 
+    <string name="tap_the_beat_help_text">Стучите бит</string>
+
 </resources>

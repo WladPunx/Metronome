@@ -68,6 +68,7 @@ import com.wladkoshelev.metronome.theme.SecondTextStyle
 import com.wladkoshelev.metronome.ui.metronome.MetronomeVM.VM.Event
 import com.wladkoshelev.metronome.ui.metronome.MetronomeVM.VM.Intent
 import com.wladkoshelev.metronome.ui.metronome.MetronomeVM.VM.State
+import com.wladkoshelev.metronome.ui.tap_the_beat.TapTheBeatView
 import com.wladkoshelev.metronome.ui.views.EditableFragmentTitle
 import com.wladkoshelev.metronome.ui.views.MAlertButton
 import com.wladkoshelev.metronome.ui.views.MAlertButtonsView
@@ -160,6 +161,11 @@ fun MetronomeFragment(
         intent = intent
     )
 
+    /** настукивание бита руками */
+    TapTheBeatView(
+        component = remember { vm.tapTheBeatComponent }
+    )
+
 }
 
 @Composable
@@ -168,56 +174,46 @@ private fun UI(
     state: State = State(songId = "songID", soundNameList = emptyList()),
     intent: (Intent) -> Unit = {}
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
-            EditableFragmentTitle(
-                title = state.songName,
-                onTextChange = { intent(Intent.SetName(it)) },
-                hint = stringResource(R.string.metronome_song_name_hint),
-                errorText = state.saveStatus.parseToTextToEditableFragment()
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            TactSizeBlock(
-                modifier = Modifier.fillMaxWidth(),
-                tactSize = state.metronomeState.tactSize,
-                intent = intent
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            BmpBlock(
-                modifier = Modifier.fillMaxWidth(),
-                bmp = state.metronomeState.bmp,
-                intent = intent
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            PlayControlBlock(
-                modifier = Modifier.fillMaxWidth(),
-                isPlay = state.metronomeState.isPlay,
-                intent = intent,
-                previousSong = state.previousSong,
-                nextSong = state.nextSong
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Spacer(modifier = Modifier.height(100.dp))
-        }
-
+        EditableFragmentTitle(
+            title = state.songName,
+            onTextChange = { intent(Intent.SetName(it)) },
+            hint = stringResource(R.string.metronome_song_name_hint),
+            errorText = state.saveStatus.parseToTextToEditableFragment()
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        TactSizeBlock(
+            modifier = Modifier.fillMaxWidth(),
+            tactSize = state.metronomeState.tactSize,
+            intent = intent
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        BmpBlock(
+            modifier = Modifier.fillMaxWidth(),
+            bmp = state.metronomeState.bmp,
+            intent = intent
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        PlayControlBlock(
+            modifier = Modifier.fillMaxWidth(),
+            isPlay = state.metronomeState.isPlay,
+            intent = intent,
+            previousSong = state.previousSong,
+            nextSong = state.nextSong
+        )
+        Spacer(modifier = Modifier.weight(1f))
         BottomControlPanel(
             modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter),
+                .fillMaxWidth(),
             intent = intent,
             isCanSave = state.isCanSave,
             isCanDelete = state.isCanDelete
         )
     }
-
-
 }
 
 
@@ -328,6 +324,13 @@ private fun BottomControlPanel(
                 text = null,
                 iconSize = BottomControlButtonSize,
                 onClick = { intent(Intent.IsShowSoundSettings(true)) }
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            MIconButton(
+                iconRes = R.drawable.ic_beat_it,
+                text = null,
+                iconSize = BottomControlButtonSize,
+                onClick = { intent(Intent.ShowTapTheBeat()) },
             )
             Spacer(modifier = Modifier.weight(1f))
             MIconButton(
