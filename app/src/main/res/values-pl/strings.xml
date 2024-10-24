@@ -1,0 +1,32 @@
+
+<resources>
+    <string name="all_song_title">Wszystkie piosenki</string>
+    <string name="tact_value">Uderzenia: %s</string>
+    <string name="play_list_name_hint">Nazwa playlisty</string>
+    <string name="save_status_empty_name">pusta nazwa</string>
+    <string name="save_status_name_exist">nazwa istnieje</string>
+    <string name="playlist_fragment_title">Listy odtwarzania</string>
+    <string name="no_song">Brak piosenek</string>
+    <string name="no_playlist">Brak list odtwarzania</string>
+    <string name="playlist_add_song_description">Wybierz piosenki</string>
+    <string name="playlist_no_song_in_playlist">Dodaj utwory do playlisty</string>
+    <string name="alert_delete_playlist_title">Usunąć playlistę?</string>
+    <string name="alert_delete_playlist_yes">Usuwać</string>
+    <string name="alert_delete_playlist_no">NIE</string>
+    <string name="exit_without_save_title">Wyjść bez zapisywania?</string>
+    <string name="exit_without_save_exit_without_save">Wyjście</string>
+    <string name="exit_without_save_save_and_exit">Zapisz i wyjdź</string>
+    <string name="metronome_song_name_hint">Tytuł piosenki</string>
+    <string name="metronome_tact_size_title">Uderzeń na uderzenie</string>
+    <string name="metronome_input_save">Ratować</string>
+    <string name="metronome_input_cancel">Anulować</string>
+    <string name="metronome_delete_song">Usunąć piosenkę?</string>
+    <string name="metronome_downbeat">Spokojny</string>
+    <string name="metronome_upbeat">Podniesienie ręki</string>
+    <string name="metronome_beat_settings_title">Ustawienia dźwięku</string>
+    <string name="tap_the_beat_help_text">Uderz w rytm</string>
+    <string name="settings_title">Ustawienia</string>
+    <string name="settings_language">Język</string>
+    <string name="settings_download_apk">Pobierz APK</string>
+    <string name="settings_write_to_support">Napisz do dewelopera</string>
+</resources>

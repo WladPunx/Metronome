@@ -33,6 +33,7 @@ import com.wladkoshelev.metronome.theme.DividerColor
 import com.wladkoshelev.metronome.theme.MainTextStyle
 import com.wladkoshelev.metronome.ui.views.EditableFragmentTitle
 import com.wladkoshelev.metronome.utils.navigation.NavigationInstance
+import com.wladkoshelev.metronome.utils.navigation.NavigationInstance.Companion.myNavigate
 
 
 fun getSettingsFragment() = NavigationInstance(SettingsFragmentDestination())
@@ -54,7 +55,7 @@ fun SettingsFragment(
         )
         Item(
             text = stringResource(R.string.settings_language),
-            onClick = {}
+            onClick = { navController.myNavigate(getLangFragment(true)) }
         )
         Item(
             text = stringResource(R.string.settings_download_apk),

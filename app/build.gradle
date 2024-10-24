@@ -22,13 +22,22 @@ android {
 
         kapt {
             arguments {
+                // автомиграция для Рума (экспорт схемы таблицы)
                 arg("room.schemaLocation", "$projectDir/schemas")
             }
         }
     }
 
+    // включение доступности BuildConfig
     buildFeatures {
         buildConfig true
+    }
+
+    // возможность переключать локали для AAB
+    bundle {
+        language {
+            enableSplit = false
+        }
     }
 
     signingConfigs {

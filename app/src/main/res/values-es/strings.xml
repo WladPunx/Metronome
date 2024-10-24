@@ -1,0 +1,31 @@
+<resources>
+    <string name="all_song_title">Todas las canciones</string>
+    <string name="tact_value">Ritmos: %s</string>
+    <string name="play_list_name_hint">Nombre de la lista de reproducción</string>
+    <string name="save_status_empty_name">nombre vacío</string>
+    <string name="save_status_name_exist">El nombre existe</string>
+    <string name="playlist_fragment_title">Listas de reproducción</string>
+    <string name="no_song">No hay canciones</string>
+    <string name="no_playlist">Sin listas de reproducción</string>
+    <string name="playlist_add_song_description">Seleccionar canciones</string>
+    <string name="playlist_no_song_in_playlist">Agregar canciones a la lista de reproducción</string>
+    <string name="alert_delete_playlist_title">¿Borrar lista de reproducción?</string>
+    <string name="alert_delete_playlist_yes">Borrar</string>
+    <string name="alert_delete_playlist_no">No</string>
+    <string name="exit_without_save_title">¿Salir sin guardar?</string>
+    <string name="exit_without_save_exit_without_save">Salida</string>
+    <string name="exit_without_save_save_and_exit">Guardar y salir</string>
+    <string name="metronome_song_name_hint">Nombre de la canción</string>
+    <string name="metronome_tact_size_title">Latidos por latido</string>
+    <string name="metronome_input_save">Ahorrar</string>
+    <string name="metronome_input_cancel">Cancelar</string>
+    <string name="metronome_delete_song">¿Borrar canción?</string>
+    <string name="metronome_downbeat">Tiempo de bajón</string>
+    <string name="metronome_upbeat">Optimista</string>
+    <string name="metronome_beat_settings_title">Configuración de sonido</string>
+    <string name="tap_the_beat_help_text">Toca el ritmo</string>
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_download_apk">Descargar APK</string>
+    <string name="settings_write_to_support">Escribe al desarrollador</string>
+</resources>
