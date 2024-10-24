@@ -14,6 +14,7 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.wladkoshelev.metronome.ui.metronome.getMetronomeFragment
 import com.wladkoshelev.metronome.ui.playlist.getPlayListsFragment
+import com.wladkoshelev.metronome.ui.settings.getSettingsFragment
 import com.wladkoshelev.metronome.ui.songs.getSongsFragment
 import com.wladkoshelev.metronome.utils.navigation.NavigationInstance
 import com.wladkoshelev.metronome.utils.navigation.NavigationInstance.Companion.myNavigate
@@ -33,6 +34,9 @@ fun MainFragment(navController: NavController) {
         }
         Button(onClick = { navigateTo(getPlayListsFragment()) }) {
             Text(text = "плейлисты")
+        }
+        Button(onClick = { navigateTo(getSettingsFragment()) }) {
+            Text(text = "--настройки")
         }
     }
 }
